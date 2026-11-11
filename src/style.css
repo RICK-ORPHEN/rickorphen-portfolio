@@ -330,3 +330,15 @@ h2 { font-family: var(--display); font-weight: 800; line-height: 1.12; letter-sp
 .boy .zzz text { font-family: var(--display); font-size: 22px; font-weight: 700; fill: var(--ink); stroke: none; }
 .boy .thin { stroke-width: 2; }
 .boy .drop { fill: var(--cobalt); stroke: none; }
+
+/* ballpoint-pen look for the pilot */
+:root { --pen: #1a2478; }
+[data-theme='void'] { --pen: #d9dad6; }
+.boy * { stroke: var(--pen); stroke-width: 1.9; }
+.boy .thin { stroke-width: 1.3; }
+.boy .dot { fill: var(--pen); stroke: none; }
+.boy .signtext { font-family: var(--text); font-weight: 700; font-size: 13.5px; fill: var(--pen); stroke: none; }
+.boy .zzz text { fill: var(--pen); font-size: 17px; font-style: italic; font-weight: 500; }
+.say { border-color: var(--pen); border-width: 1.5px; color: var(--pen); }
+.boy .pen { fill: var(--pen); }
+.boy .reddot { fill: var(--red); stroke: none; }
