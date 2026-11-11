@@ -5,7 +5,7 @@ const SVG = `
   <defs>
     <filter id="boy-boil" x="-60%" y="-40%" width="220%" height="180%">
       <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="1" result="n" />
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" />
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" />
     </filter>
     <clipPath id="boy-hatch"><rect x="-500" y="-600" width="1000" height="602" /></clipPath>
   </defs>
@@ -82,11 +82,13 @@ export function createPilot() {
   let cur = null;
   let last = '';
   let lastFall = -10;
+  let smT = 0;
+  let sm = {};
 
   // st: { summon, keep, hide, jolt }  ptr: { x, y (−1…1), px, py, speed }
   return function update(now, seat, ptr, st) {
     const t = now / 1000;
-    if (st.summon && !active) { active = true; tOn = t; cur = null; last = ''; }
+    if (st.summon && !active) { active = true; tOn = t; cur = null; last = ''; sm = {}; }
     if (!st.keep && active) { active = false; tOff = t; }
     const leaving = !active && t - tOff < 0.5;
     const visible = !!seat && !st.hide && (active || leaving);
@@ -161,6 +163,12 @@ export function createPilot() {
       armR = -150; oh = true; text = 'またね！';
     }
     if (!shut && eyeS === 1 && t % 3.3 < 0.11) eyeS = 0.15;
+    // smooth every joint toward its target so nothing snaps between acts
+    const sdt = Math.min(0.05, Math.max(0, t - smT)); smT = t;
+    const sk = 1 - Math.exp(-sdt * 16);
+    const tg = { y, armL, armR, head, lean, slide, gog, lookX, lookY };
+    for (const key in tg) sm[key] = sm[key] === undefined ? tg[key] : sm[key] + (tg[key] - sm[key]) * sk;
+    ({ y, armL, armR, head, lean, slide, gog, lookX, lookY } = sm);
 
     p.all.setAttribute('transform', `rotate(${lean.toFixed(1)}) translate(${slide.toFixed(1)} ${y.toFixed(1)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})`);
     p.armL.setAttribute('transform', `rotate(${armL.toFixed(1)} -23 -58)`);

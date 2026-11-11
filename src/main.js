@@ -136,7 +136,7 @@ function setN(v, fromUser = true) {
   const pct = Math.round(n * 100);
   root.style.setProperty('--n', n.toFixed(3));
   dialOut.textContent = pct;
-  dialState.textContent = pct === 0 ? '正気' : pct < 40 ? 'まだ読める' : pct < 80 ? 'だいぶおかしい' : pct < 100 ? '解読不能' : '操縦士、登場';
+  dialState.textContent = pct === 0 ? 'Sane' : pct < 40 ? 'Still readable' : pct < 80 ? 'Getting weird' : pct < 100 ? 'Unreadable' : 'Pilot on deck';
   if (!fromUser) dial.value = pct;
   scene?.setNonsense(n);
 }
@@ -540,6 +540,35 @@ $('#career-close').addEventListener('click', () => career.close());
 $('#career-contact').addEventListener('click', () => career.close());
 career.addEventListener('close', () => { scribbler.stop(); if (location.hash === '#career') history.replaceState(null, '', location.pathname); });
 
+/* ---------- contact form ---------- */
+const form = $('#contact-form');
+const note = $('#form-note');
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(form));
+  if (d._honey) return;
+  const btn = $('button', form);
+  btn.disabled = true;
+  btn.textContent = '送信中…';
+  note.className = 'form-note';
+  note.textContent = '';
+  try {
+    const r = await fetch('https://formsubmit.co/ajax/info@rickorphen.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ name: d.name, email: d.email, message: d.message, _subject: `rickorphen.com からの相談（${d.name}）`, _template: 'table', _captcha: 'false' }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || String(j.success) !== 'true') throw new Error(j.message || String(r.status));
+    form.reset();
+    note.textContent = '送信しました。返信までお待ちください。';
+  } catch (err) {
+    note.className = 'form-note ng';
+    note.textContent = '送信できませんでした。時間をおいてもう一度試すか、info@rickorphen.com へ直接メールしてください。';
+  }
+  btn.disabled = false;
+  btn.textContent = '送信する';
+});
 /* ---------- deep link ---------- */
 const fromHash = () => {
   const i = works.findIndex((w) => `#${w.id}` === location.hash);

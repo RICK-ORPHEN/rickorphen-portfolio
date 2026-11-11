@@ -5,7 +5,7 @@ const SVG = `
   <defs>
     <filter id="cvr-boil" x="-40%" y="-30%" width="180%" height="160%">
       <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="1" result="n" />
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" />
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" />
     </filter>
   </defs>
   <g filter="url(#cvr-boil)">
@@ -18,6 +18,10 @@ const SVG = `
           <path d="M-22 12C-26 -30 -18 -72 0 -72C18 -72 26 -30 22 12Z" />
           <path d="M0 -66V-6M-8 -71L0 -62L8 -71" class="nofill" />
           <g data-r="armR"><path d="M20 -58C34 -50 37 -34 31 -20" class="nofill" /><circle cx="31" cy="-17" r="5.5" /></g>
+          <g data-r="pray" style="display:none">
+            <path d="M-20 -58C-32 -50 -32 -38 -22 -36L-5 -46M20 -58C32 -50 32 -38 22 -36L5 -46" class="nofill" />
+            <path d="M-5 -44C-9 -52 -4 -62 0 -67C4 -62 9 -52 5 -44Z" /><path d="M0 -66V-45" class="nofill thin" />
+          </g>
           <g data-r="head">
             <path d="M-42 -110a4 6 0 1 0 0 10M42 -110a4 6 0 1 1 0 10" /><ellipse cx="0" cy="-112" rx="42" ry="38" />
             <path d="M-41 -120C-44 -158 44 -158 41 -120" class="nofill" />
@@ -25,6 +29,7 @@ const SVG = `
             <path d="M-6 -150l-5 -13 9 8 4 -13 4 14 8 -7 -4 12" class="nofill" />
             <path d="M-40 -144L-27 -148M27 -148L40 -144M-5 -150H5" class="nofill" /><circle cx="-16" cy="-150" r="11" /><circle cx="16" cy="-150" r="11" />
             <g data-r="eyes"><circle cx="-9" cy="-112" r="2.3" class="dot" /><circle cx="9" cy="-112" r="2.3" class="dot" /></g>
+            <path d="M-13 -112q4 3 8 0M5 -112q4 3 8 0" class="nofill" data-r="shut" style="display:none" />
             <path d="M0 -106q4 3 0 6" class="nofill" /><path d="M-6 -94q6 3 12 0" class="nofill" data-r="mouth" />
           </g>
         </g>
@@ -81,8 +86,9 @@ export function createScribbler(dialog, { reduced = false } = {}) {
     m.photo.forEach((e) => e.classList.toggle('hit', on));
   };
 
-  const S = { x: 0, y: 0, tx: 0, ty: 0, speed: 520, view: 'front', turn: 1, writing: false, gesture: 'idle' };
-  const pose = { aL: 0, aR: 0, hd: 0, by: 0 };
+  const S = { x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0, speed: 520, view: 'front', turn: 1, writing: false, gesture: 'idle', phase: 0 };
+  const pose = { aL: 0, aR: 0, hd: 0, by: 0, hy: 0, leg: 0, wx: 0, wy: 0 };
+  const ease = (a) => 0.5 - Math.cos(Math.PI * a) / 2;
   let run = 0, raf = 0, last = 0, seed = 0, lastBoil = 0;
   const K = () => runner.clientWidth / 140;
   const ok = (id) => { if (id !== run) throw CANCEL; };
@@ -94,12 +100,12 @@ export function createScribbler(dialog, { reduced = false } = {}) {
   }).then(() => ok(id));
   const at = (rect, fx = 1, fy = 0.55) => { const w = wrap.getBoundingClientRect(); return { x: rect.left - w.left + rect.width * fx, y: rect.top - w.top + rect.height * fy }; };
   const go = (p, speed = 520) => { S.tx = p.x; S.ty = p.y; S.speed = speed; };
-  const arrive = async (id) => { while (Math.hypot(S.tx - S.x, S.ty - S.y) > 1.5) await sleep(30, id); };
+  const arrive = async (id) => { while (Math.hypot(S.tx - S.x, S.ty - S.y) > 1.5 || Math.hypot(S.vx, S.vy) > 30) await sleep(30, id); };
   const face = async (v, id) => {
     if (S.view === v) return;
-    await tween((a) => (S.turn = 1 - a), 100, id);
+    await tween((a) => (S.turn = 1 - ease(a)), 170, id);
     S.view = v;
-    await tween((a) => (S.turn = a), 100, id);
+    await tween((a) => (S.turn = ease(a)), 170, id);
   };
   const say = (text) => {
     bubble.textContent = text;
@@ -184,7 +190,7 @@ export function createScribbler(dialog, { reduced = false } = {}) {
     go({ x: wrap.clientWidth - runner.clientWidth - 6, y: S.y });
     await arrive(id);
     say('たのむ。');
-    S.gesture = 'cheer';
+    S.gesture = 'pray';
   }
 
   function frame(now) {
@@ -192,41 +198,60 @@ export function createScribbler(dialog, { reduced = false } = {}) {
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     const t = now / 1000;
+    // eased travel: speed builds up, then falls away as he closes in on the target
     const dx = S.tx - S.x, dy = S.ty - S.y, d = Math.hypot(dx, dy);
-    const stepLen = S.speed * dt;
-    if (d <= stepLen) { S.x = S.tx; S.y = S.ty; } else { S.x += (dx / d) * stepLen; S.y += (dy / d) * stepLen; }
-    const moving = d > 2 && !S.writing;
+    const want = Math.min(S.speed, d * (S.writing ? 16 : 7));
+    const acc = 1 - Math.exp(-dt * (S.writing ? 22 : 9));
+    S.vx += ((d > 0.01 ? (dx / d) * want : 0) - S.vx) * acc;
+    S.vy += ((d > 0.01 ? (dy / d) * want : 0) - S.vy) * acc;
+    S.x += S.vx * dt;
+    S.y += S.vy * dt;
+    const v = Math.hypot(S.vx, S.vy);
     const k = K();
-    runner.style.transform = `translate(${(S.x - 2 * k).toFixed(1)}px, ${(S.y - 67 * k).toFixed(1)}px)`;
-    if (now - lastBoil > 110) { lastBoil = now; turb.setAttribute('seed', String((seed = (seed % 6) + 1))); }
+    runner.style.transform = `translate(${(S.x - 2 * k).toFixed(2)}px, ${(S.y - 67 * k).toFixed(2)}px)`;
+    if (now - lastBoil > 150) { lastBoil = now; turb.setAttribute('seed', String((seed = (seed % 5) + 1))); }
 
-    const sw = moving ? Math.sin(t * 15) : S.writing ? Math.sin(t * 9) * 0.25 : 0;
-    const amp = S.view === 'back' ? 14 : 24;
+    // legs step with the distance covered, so the feet never slide
+    S.phase += (v * dt) / (20 * k);
+    const stride = Math.min(1, v / (150 * k));
+    pose.leg = lerp(pose.leg, stride, 1 - Math.exp(-dt * 10));
+    const sw = Math.sin(S.phase) * pose.leg;
+    const moving = pose.leg > 0.08;
+    const amp = S.view === 'back' ? 16 : 26;
     r.legL.setAttribute('transform', `rotate(${(sw * amp).toFixed(1)} -10 10)`);
     r.legR.setAttribute('transform', `rotate(${(-sw * amp).toFixed(1)} 10 10)`);
     r.flip.setAttribute('transform', `scale(${Math.max(0.03, S.turn).toFixed(3)} 1)`);
     r.front.style.display = S.view === 'front' ? '' : 'none';
     r.back.style.display = S.view === 'back' ? '' : 'none';
 
-    let aL = sw * 16 + Math.sin(t * 2.4) * 2, aR = sw * 16, hd = Math.sin(t * 1.1) * 2, by = moving ? -Math.abs(Math.sin(t * 15)) * 2.5 : Math.sin(t * 2.4) * 0.8;
+    let aL = sw * 16 + Math.sin(t * 2.4) * 2, aR = sw * 16, hd = Math.sin(t * 1.1) * 2, hy = 0;
+    let by = moving ? -Math.abs(Math.cos(S.phase)) * 2.5 * pose.leg : Math.sin(t * 2.4) * 0.8;
     const g = S.gesture;
     if (g === 'point') { aL = 98 + Math.sin(t * 9) * 6; hd = -8; }
     else if (g === 'shrug') { aL = 62; aR = -62; hd = Math.sin(t * 5) * 5; by = -3; }
     else if (g === 'scratch') { aR = -150 + Math.sin(t * 17) * 8; hd = 10; }
-    else if (g === 'cheer') { aL = 150 + Math.sin(t * 12) * 14; aR = -150 - Math.sin(t * 12) * 14; by = -Math.abs(Math.sin(t * 6)) * 8; }
-    const e = 1 - Math.exp(-dt * 14);
-    pose.aL = lerp(pose.aL, aL, e); pose.aR = lerp(pose.aR, aR, e); pose.hd = lerp(pose.hd, hd, e); pose.by = lerp(pose.by, by, e);
+    else if (g === 'pray') { const bow = Math.pow(Math.max(0, Math.sin(t * 2.6)), 2); hy = bow * 7; by = bow * 4; hd = Math.sin(t * 5.2) * 1.5; }
+    const e = 1 - Math.exp(-dt * 9);
+    pose.aL = lerp(pose.aL, aL, e); pose.aR = lerp(pose.aR, aR, e); pose.hd = lerp(pose.hd, hd, e); pose.by = lerp(pose.by, by, e); pose.hy = lerp(pose.hy, hy, e);
     r.upper.setAttribute('transform', `translate(0 ${pose.by.toFixed(1)})`);
     if (S.view === 'front') {
       r.armL.setAttribute('transform', `rotate(${pose.aL.toFixed(1)} -20 -58)`);
       r.armR.setAttribute('transform', `rotate(${pose.aR.toFixed(1)} 20 -58)`);
-      r.head.setAttribute('transform', `rotate(${pose.hd.toFixed(1)} 0 -74)`);
+      r.head.setAttribute('transform', `translate(0 ${pose.hy.toFixed(1)}) rotate(${pose.hd.toFixed(1)} 0 -74)`);
+      const praying = g === 'pray';
+      r.pray.style.display = praying ? '' : 'none';
+      r.armL.style.display = r.armR.style.display = praying ? 'none' : '';
+      if (praying) r.pray.setAttribute('transform', `translate(${(Math.sin(t * 19) * 0.7).toFixed(2)} ${(pose.hy * 0.5).toFixed(1)})`);
+      r.eyes.style.display = praying ? 'none' : '';
+      r.shut.style.display = praying ? '' : 'none';
       const bl = t % 3.1 < 0.11 ? 0.15 : 1;
       r.eyes.setAttribute('transform', `translate(0 ${(-112 * (1 - bl)).toFixed(1)}) scale(1 ${bl})`);
     } else {
       // the writing arm: shoulder → elbow → hand, with the pen running on to the tip
-      let hx = -58, hy = -96 - pose.by;
-      if (S.writing) { hx += Math.sin(t * 31) * 2.6; hy += Math.cos(t * 23) * 3.4; }
+      let hx = -58;
+      hy = -96 - pose.by;
+      pose.wx = lerp(pose.wx, S.writing ? 1 : 0, 1 - Math.exp(-dt * 10));
+      hx += Math.sin(t * 27) * 2.4 * pose.wx; hy += Math.cos(t * 19) * 3.2 * pose.wx;
       if (g === 'paste') { hx = -50 + Math.sin(t * 28) * 2; hy = -106 + Math.abs(Math.sin(t * 14)) * 6; }
       r.warm.setAttribute('d', `M-20 -58Q${(-50 + (hx + 58) * 0.4).toFixed(1)} ${(-50 + (hy + 96) * 0.3).toFixed(1)} ${hx.toFixed(1)} ${hy.toFixed(1)}`);
       r.whand.setAttribute('cx', hx.toFixed(1));
@@ -244,6 +269,7 @@ export function createScribbler(dialog, { reduced = false } = {}) {
     stop();
     say('');
     Object.assign(S, { view: 'front', turn: 1, writing: false, gesture: 'idle' });
+    S.vx = S.vy = 0;
     S.x = S.tx = wrap.clientWidth - runner.clientWidth - 8;
     S.y = S.ty = 150;
     if (reduced) { setAll(true); frame(performance.now()); cancelAnimationFrame(raf); return; }
