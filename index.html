@@ -75,11 +75,28 @@
 
     <section id="contact" class="contact" aria-labelledby="contact-title">
       <div class="eyes" aria-hidden="true"></div>
-      <h2 id="contact-title"><span data-scramble>訳のわからないものを、</span><br /><span data-scramble>一緒に作りましょう。</span></h2>
-      <p class="contact-links">
-        <a class="btn" href="https://square-one.co.jp/" target="_blank" rel="noopener">SQUAREONE のサイトを開く</a>
-        <a class="btn btn-ghost" href="https://www.squareone-academy.com/" target="_blank" rel="noopener">Academy を開く</a>
-      </p>
+      <div class="contact-cols">
+        <div>
+          <h2 id="contact-title"><span data-scramble>訳のわからないものを、</span><br /><span data-scramble>一緒に作りましょう。</span></h2>
+          <p class="contact-lead">仕事の相談は、フォームからどうぞ。<a href="mailto:info@rickorphen.com">info@rickorphen.com</a> に届きます。</p>
+          <p class="contact-links">
+            <a class="btn btn-ghost" href="https://square-one.co.jp/" target="_blank" rel="noopener">SQUAREONE のサイトを開く</a>
+            <a class="btn btn-ghost" href="https://www.squareone-academy.com/" target="_blank" rel="noopener">Academy を開く</a>
+          </p>
+        </div>
+        <form class="form" id="contact-form" action="https://formsubmit.co/info@rickorphen.com" method="POST">
+          <h3 class="form-title">仕事の相談</h3>
+          <label for="f-name">お名前</label>
+          <input id="f-name" name="name" type="text" autocomplete="name" required />
+          <label for="f-mail">メールアドレス</label>
+          <input id="f-mail" name="email" type="email" autocomplete="email" required />
+          <label for="f-body">相談の内容</label>
+          <textarea id="f-body" name="message" rows="5" required></textarea>
+          <input class="hp" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <button type="submit" class="btn">送信する</button>
+          <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
+        </form>
+      </div>
       <footer class="foot">
         <span>© 2026 RICK ORPHEN</span>
         <button type="button" class="foot-reset" id="calm">訳わからなさを 0 に戻す</button>

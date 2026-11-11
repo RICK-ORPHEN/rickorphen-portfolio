@@ -524,6 +524,36 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 
+/* ---------- contact form ---------- */
+const form = $('#contact-form');
+const note = $('#form-note');
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(form));
+  if (d._honey) return;
+  const btn = $('button', form);
+  btn.disabled = true;
+  btn.textContent = '送信中…';
+  note.className = 'form-note';
+  note.textContent = '';
+  try {
+    const r = await fetch('https://formsubmit.co/ajax/info@rickorphen.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ name: d.name, email: d.email, message: d.message, _subject: `rickorphen.com からの相談（${d.name}）`, _template: 'table', _captcha: 'false' }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || String(j.success) !== 'true') throw new Error(j.message || String(r.status));
+    form.reset();
+    note.textContent = '送信しました。返信までお待ちください。';
+  } catch (err) {
+    note.className = 'form-note ng';
+    note.textContent = '送信できませんでした。時間をおいてもう一度試すか、info@rickorphen.com へ直接メールしてください。';
+  }
+  btn.disabled = false;
+  btn.textContent = '送信する';
+});
+
 /* ---------- deep link ---------- */
 const fromHash = () => {
   const i = works.findIndex((w) => `#${w.id}` === location.hash);
