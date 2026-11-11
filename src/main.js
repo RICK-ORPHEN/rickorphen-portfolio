@@ -4,6 +4,7 @@ import './fonts.css';
 import './style.css';
 import { works, groups } from './data.js';
 import { createScene } from './scene.js';
+import { createPilot } from './pilot.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -413,20 +414,10 @@ function drawBars(t) {
   }
 }
 
-/* ---------- the pilot's speech bubble ---------- */
-const say = document.createElement('div');
-say.className = 'say';
-say.setAttribute('aria-hidden', 'true');
-document.body.append(say);
-const LINES = ['やあ！', 'ここ、ぼくの操縦席。', '100 まで回したね。', '目は、ぼくが動かしてるよ。'];
-function drawSay(t) {
-  const p = scene?.pilotScreen();
-  const on = !!p && zone < 0.4 && !sheet.open;
-  say.classList.toggle('on', on);
-  if (!on) return;
-  say.textContent = LINES[Math.floor(t / 3.2) % LINES.length];
-  say.style.transform = `translate(${(p.x + 46 * p.s).toFixed(1)}px, ${Math.max(p.y - 34 * p.s, 64).toFixed(1)}px)`;
-}
+/* ---------- the pilot (hand-drawn, appears at 100) ---------- */
+const pilot = createPilot();
+const ptrN = { x: 0, y: 0 };
+addEventListener('pointermove', (e) => { ptrN.x = (e.clientX / innerWidth) * 2 - 1; ptrN.y = -(e.clientY / innerHeight) * 2 + 1; });
 
 /* ---------- telemetry ---------- */
 const tPupil = $('#t-pupil');
@@ -472,7 +463,7 @@ function loop(now) {
   const t = now / 1000;
   if (zone < 1 && !reduced) drawBars(t);
   if (tick % 6 === 0) drawTele();
-  if (tick % 3 === 0) drawSay(t);
+  pilot(now, scene ? scene.seatScreen() : null, ptrN, n >= 0.995 && !reduced, zone > 0.45 || sheet.open);
   // hero letters drift with the dial
   if (!reduced && zone < 1) {
     const fs = parseFloat(getComputedStyle(title).fontSize);

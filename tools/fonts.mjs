@@ -3,7 +3,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import subsetFont from 'subset-font';
 
-const sources = ['index.html', 'src/data.js', 'src/main.js'];
+const sources = ["index.html", "src/data.js", "src/main.js", "src/pilot.js"];
 let text = '';
 for (const f of sources) text += await readFile(f, 'utf8');
 const ascii = Array.from({ length: 95 }, (_, i) => String.fromCharCode(32 + i)).join('');
