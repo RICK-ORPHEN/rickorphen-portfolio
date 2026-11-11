@@ -50,6 +50,7 @@ const SVG = `
 </svg>`;
 
 const CANCEL = Symbol('cancel');
+const SKIP = Symbol('skip');
 const lerp = (a, b, t) => a + (b - a) * t;
 
 export function createScribbler(dialog, { reduced = false } = {}) {
@@ -91,15 +92,29 @@ export function createScribbler(dialog, { reduced = false } = {}) {
   const ease = (a) => 0.5 - Math.cos(Math.PI * a) / 2;
   let run = 0, raf = 0, last = 0, seed = 0, lastBoil = 0;
   const K = () => runner.clientWidth / 140;
-  const ok = (id) => { if (id !== run) throw CANCEL; };
-  const sleep = (ms, id) => new Promise((res) => setTimeout(res, ms)).then(() => ok(id));
+  // Reading ahead: a line the reader has already scrolled past is finished on the spot,
+  // and lines near the top of the screen are done at a brisker pace.
+  let cur = -1, scrolled = false;
+  dialog.addEventListener('scroll', () => (scrolled = true), { passive: true });
+  const atEnd = () => dialog.scrollTop + dialog.clientHeight >= dialog.scrollHeight - 80;
+  const passed = (i) => i >= 0 && (steps[i].getBoundingClientRect().bottom < 90 || (atEnd() && i < steps.length - 1));
+  const pace = () => (cur < 0 || !scrolled ? 1 : atEnd() ? 2.2 : steps[cur].getBoundingClientRect().top < innerHeight * 0.3 ? 2.5 : 1);
+  const ok = (id) => { if (id !== run) throw CANCEL; if (passed(cur)) throw SKIP; };
+  const sleep = (ms, id) => new Promise((res) => setTimeout(res, ms / pace())).then(() => ok(id));
+  const finish = (step) => {
+    step.querySelectorAll('.ch').forEach((e) => e.classList.add('on'));
+    step.querySelectorAll('s').forEach((e) => e.classList.add('struck'));
+    step.querySelectorAll('.pen').forEach((e) => e.classList.add('done'));
+    step.querySelectorAll('.cv-memo').forEach((e) => e.classList.add('on'));
+    if (step.matches('.cv-photo')) step.classList.add('hit');
+  };
   const tween = (fn, ms, id) => new Promise((res) => {
     const t0 = performance.now();
     const f = (now) => { const a = Math.min(1, (now - t0) / ms); fn(a); a < 1 ? requestAnimationFrame(f) : res(); };
     requestAnimationFrame(f);
   }).then(() => ok(id));
   const at = (rect, fx = 1, fy = 0.55) => { const w = wrap.getBoundingClientRect(); return { x: rect.left - w.left + rect.width * fx, y: rect.top - w.top + rect.height * fy }; };
-  const go = (p, speed = 520) => { S.tx = p.x; S.ty = p.y; S.speed = speed; };
+  const go = (p, speed = 520) => { S.tx = p.x; S.ty = p.y; S.speed = speed * pace(); };
   const arrive = async (id) => { while (Math.hypot(S.tx - S.x, S.ty - S.y) > 1.5 || Math.hypot(S.vx, S.vy) > 30) await sleep(30, id); };
   const face = async (v, id) => {
     if (S.view === v) return;
@@ -142,6 +157,7 @@ export function createScribbler(dialog, { reduced = false } = {}) {
       go(at(c.getBoundingClientRect(), 1), 1500);
       c.classList.add('on');
       await sleep(/[、。！？　 ]/.test(c.textContent) ? 2200 / cps : 1000 / cps, id);
+      if (pace() > 1) c.nextElementSibling?.classList.add('on'); // in a hurry he writes two letters at a time
     }
     S.writing = false;
     pen.classList.add('done');
@@ -157,11 +173,34 @@ export function createScribbler(dialog, { reduced = false } = {}) {
     S.gesture = 'idle';
   }
 
+  async function act(step, gesture, id) {
+    if (step.matches('.cv-photo')) await paste(at(step.getBoundingClientRect(), 0.3, 0.45), () => step.classList.add('hit'), id);
+    for (const el of step.querySelectorAll('s')) await strike(el, id);
+    for (const pen of step.querySelectorAll('.pen')) await write(pen, pen.matches('.cv-wish-text') ? 7 : 26, id);
+    const memo = step.querySelector('.cv-memo');
+    if (memo) {
+      const q = step.getBoundingClientRect();
+      const w = wrap.getBoundingClientRect();
+      await paste({ x: q.right - w.left - memo.offsetWidth * 0.7, y: q.top - w.top + memo.offsetTop + 18 }, () => memo.classList.add('on'), id);
+      go({ x: S.x - memo.offsetWidth * 0.5 - 60 * K(), y: S.y });
+      await arrive(id);
+    }
+    await face('front', id);
+    S.gesture = gesture;
+    say(step.dataset.say || '');
+    await sleep(1200, id);
+    S.gesture = 'idle';
+  }
+
   async function play(id) {
     const gestures = ['point', 'shrug', 'scratch'];
-    let gi = 0;
+    let jumped = false;
+    cur = -1;
     await sleep(700, id);
-    for (const step of steps) {
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      if (passed(i)) { finish(step); jumped = true; continue; }
+      cur = -1;
       let waited = 0;
       while (step.getBoundingClientRect().top > innerHeight * 0.8) {
         if ((waited += 200) === 1600) say('下へスクロールして。');
@@ -169,22 +208,26 @@ export function createScribbler(dialog, { reduced = false } = {}) {
       }
       say('');
       S.gesture = 'idle';
-      if (step.matches('.cv-photo')) await paste(at(step.getBoundingClientRect(), 0.3, 0.45), () => step.classList.add('hit'), id);
-      for (const s of step.querySelectorAll('s')) await strike(s, id);
-      for (const pen of step.querySelectorAll('.pen')) await write(pen, pen.matches('.cv-wish-text') ? 7 : 26, id);
-      const memo = step.querySelector('.cv-memo');
-      if (memo) {
-        const q = step.getBoundingClientRect();
-        const w = wrap.getBoundingClientRect();
-        await paste({ x: q.right - w.left - memo.offsetWidth * 0.7, y: q.top - w.top + memo.offsetTop + 18 }, () => memo.classList.add('on'), id);
-        go({ x: S.x - memo.offsetWidth * 0.5 - 60 * K(), y: S.y });
-        await arrive(id);
+      if (jumped) {
+        // he was left behind: hop straight to the margin beside the line the reader is on
+        const p = at(step.getBoundingClientRect(), 0, 0.3);
+        Object.assign(S, { view: 'front', turn: 1, writing: false, vx: 0, vy: 0 });
+        S.x = S.tx = wrap.clientWidth - runner.clientWidth - 6;
+        S.y = S.ty = p.y;
+        jumped = false;
       }
-      await face('front', id);
-      S.gesture = gestures[gi++ % gestures.length];
-      say(step.dataset.say || '');
-      await sleep(1200, id);
-      S.gesture = 'idle';
+      cur = i;
+      try {
+        await act(step, gestures[i % gestures.length], id);
+      } catch (err) {
+        if (err !== SKIP) throw err;
+        finish(step);
+        S.writing = false;
+        S.gesture = 'idle';
+        say('');
+        jumped = true;
+      }
+      cur = -1;
     }
     // step out to the margin so the last line stays readable, then beg
     go({ x: wrap.clientWidth - runner.clientWidth - 6, y: S.y });
@@ -275,6 +318,8 @@ export function createScribbler(dialog, { reduced = false } = {}) {
     if (reduced) { setAll(true); frame(performance.now()); cancelAnimationFrame(raf); return; }
     setAll(false);
     const id = ++run;
+    scrolled = false;
+    cur = -1;
     last = performance.now();
     raf = requestAnimationFrame(frame);
     play(id).catch((err) => { if (err !== CANCEL) throw err; });
