@@ -169,6 +169,8 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     uTime: U.time,
     uLight: { value: LIGHT },
     uLightObj: { value: new THREE.Vector3(0, 0, 1) },
+    uLidUp: { value: new THREE.Vector3(0, 0, -1) },
+    uLidLow: { value: new THREE.Vector3(0, 0, -1) },
   };
   const eyeballMat = new THREE.ShaderMaterial({
     uniforms: EU,
@@ -182,7 +184,7 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
       }`,
     fragmentShader: /* glsl */ `
       ${NOISE}
-      uniform float uPupil; uniform float uTime; uniform vec3 uLight; uniform vec3 uLightObj;
+      uniform float uPupil; uniform float uTime; uniform vec3 uLight; uniform vec3 uLightObj; uniform vec3 uLidUp; uniform vec3 uLidLow;
       varying vec3 vObjPos; varying vec3 vObjCam; varying vec3 vWorldN;
       const float IRIS = 0.60;
       void main(){
@@ -233,7 +235,10 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
         float ndl = dot(normalize(vWorldN), normalize(uLight));
         float diff = 0.38 + 0.72 * pow(clamp(ndl * 0.5 + 0.5, 0.0, 1.0), 1.4);
         float ao = mix(0.22, 1.0, smoothstep(0.54, 0.84, N.y));
-        vec3 c = base * diff * ao;
+        // the lids cast a soft shadow on the eye instead of drawing a hard line
+        float shUp = smoothstep(-0.26, 0.02, dot(N, uLidUp));
+        float shLow = smoothstep(-0.12, 0.02, dot(N, uLidLow));
+        vec3 c = base * diff * ao * (1.0 - 0.6 * shUp * shUp) * (1.0 - 0.3 * shLow);
         gl_FragColor = vec4(pow(c, vec3(2.2)), 1.0);
       }`,
   });
@@ -302,8 +307,8 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
   eye.add(lids);
   const makeLid = (upper) => {
     const shell = new THREE.Mesh(new THREE.SphereGeometry(LID_R, 56, 20, 0, Math.PI * 2, upper ? 0 : Math.PI / 2, Math.PI / 2), lidMat);
-    // a dark lash line along the edge that sweeps across the eye
-    shell.add(new THREE.Mesh(new THREE.TorusGeometry(LID_R, 0.013, 8, 56, Math.PI).rotateX(Math.PI / 2), mats.ink));
+    // a thin chrome lip rounds off the edge; the dark is left to the shadow on the eye
+    shell.add(new THREE.Mesh(new THREE.TorusGeometry(LID_R, 0.009, 8, 56, Math.PI).rotateX(Math.PI / 2), lidMat));
     lids.add(shell);
     return shell;
   };
@@ -494,6 +499,10 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     const rest = 44 + U.eye.value.y * 10; // looking down lowers the upper lid a little
     lidUp.rotation.x = -lerp(rest, -15, S.lid) * DEG;
     lidLow.rotation.x = -lerp(-55, -15, Math.min(1, S.lid * 1.05)) * DEG;
+    // lid edge planes, expressed in the eyeball's own space, for the shadow
+    tmpQ.copy(look.quaternion).invert();
+    EU.uLidUp.value.set(0, Math.cos(lidUp.rotation.x), Math.sin(lidUp.rotation.x)).applyQuaternion(lids.quaternion).applyQuaternion(tmpQ);
+    EU.uLidLow.value.set(0, -Math.cos(lidLow.rotation.x), -Math.sin(lidLow.rotation.x)).applyQuaternion(lids.quaternion).applyQuaternion(tmpQ);
     EU.uLightObj.value.copy(LIGHT).applyQuaternion(tmpQ.copy(look.quaternion).invert());
     const pupilTo = S.pupilBase + (S.hi ? 0.09 : 0) + Math.sin(U.time.value * 1.9) * 0.012 + (S.blinkT >= 0 ? 0.06 : 0);
     EU.uPupil.value = lerp(EU.uPupil.value, pupilTo, 1 - Math.exp(-dt * 3.5));
