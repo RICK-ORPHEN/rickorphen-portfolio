@@ -36,7 +36,7 @@ float ro_snoise(vec3 v){
 }`;
 
 const DISP = /* glsl */ `
-uniform float uTime; uniform float uAmp; uniform float uSpike; uniform vec3 uEye;
+uniform float uTime; uniform float uAmp; uniform float uSpike; uniform vec3 uEye; uniform vec3 uSeat; uniform float uPilot;
 float roDisp(vec3 p){
   float t = uTime;
   float a = ro_snoise(p*1.15 + vec3(0.0, t*0.22, t*0.10)) * 0.62
@@ -44,6 +44,7 @@ float roDisp(vec3 p){
   float sp = pow(max(ro_snoise(p*3.6 + vec3(t*0.3)), 0.0), 2.5);
   float d = dot(p, uEye);
   float mask = 1.0 - smoothstep(0.66, 0.84, d);
+  mask *= 1.0 - smoothstep(0.78, 0.93, dot(p, uSeat)) * uPilot; // a calm patch for the pilot to sit on
   float lid = smoothstep(0.70, 0.80, d) * (1.0 - smoothstep(0.80, 0.86, d));
   return (a * uAmp + sp * uSpike) * mask + lid * 0.05;
 }`;
@@ -127,6 +128,8 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     amp: { value: 0.12 },
     spike: { value: 0 },
     eye: { value: new THREE.Vector3(0, 0, 1) },
+    seat: { value: new THREE.Vector3(0, 0.94, 0.34).normalize() },
+    pilot: { value: 0 },
   };
 
   // ---------- the eye ----------
@@ -139,6 +142,8 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     shader.uniforms.uAmp = U.amp;
     shader.uniforms.uSpike = U.spike;
     shader.uniforms.uEye = U.eye;
+    shader.uniforms.uSeat = U.seat;
+    shader.uniforms.uPilot = U.pilot;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>\n${NOISE}\n${DISP}`)
       .replace(
@@ -319,6 +324,57 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
   const vUp = new THREE.Vector3();
   const basis = new THREE.Matrix4();
 
+  // ---------- the pilot: a small boy who climbs out when the dial hits 100 ----------
+  const SEAT = U.seat.value;
+  const pilot = new THREE.Group();
+  pilot.visible = false;
+  eye.add(pilot);
+  {
+    const pz = new THREE.Vector3(0, 0, 1).addScaledVector(SEAT, -SEAT.z).normalize();
+    const px = new THREE.Vector3().crossVectors(SEAT, pz);
+    pilot.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(px, SEAT, pz));
+  }
+  const pm = (c, rough = 0.65) => new THREE.MeshStandardMaterial({ color: new THREE.Color(c), roughness: rough, metalness: 0 });
+  const mSkin = pm('#f3dcc6');
+  const mSuit = pm(RED, 0.45);
+  const mHair = pm('#141414', 0.4);
+  const mScarf = pm(COBALT, 0.5);
+  const put = (parent, geo, mat, x, y, z) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    parent.add(m);
+    return m;
+  };
+  const boy = { body: new THREE.Group(), head: new THREE.Group(), arms: [], legs: [], eyes: [], wave: 0 };
+  pilot.add(boy.body);
+  put(pilot, new THREE.TorusGeometry(0.2, 0.022, 10, 40), mats.chrome, 0, 0.012, 0).rotation.x = Math.PI / 2; // hatch rim
+  put(boy.body, new THREE.CapsuleGeometry(0.105, 0.1, 6, 16), mSuit, 0, 0.21, 0);
+  put(boy.body, new THREE.TorusGeometry(0.085, 0.032, 10, 24), mScarf, 0, 0.335, 0).rotation.x = Math.PI / 2;
+  boy.tail = put(boy.body, new THREE.BoxGeometry(0.05, 0.17, 0.02).translate(0, -0.085, 0), mScarf, -0.08, 0.34, -0.08);
+  boy.head.position.set(0, 0.5, 0);
+  boy.body.add(boy.head);
+  put(boy.head, new THREE.SphereGeometry(0.17, 32, 24), mSkin, 0, 0, 0);
+  put(boy.head, new THREE.SphereGeometry(0.179, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.52), mHair, 0, 0.008, -0.012).rotation.x = -0.38;
+  put(boy.head, new THREE.ConeGeometry(0.03, 0.09, 8), mHair, 0.025, 0.19, -0.01).rotation.z = -0.45;
+  for (const sx of [-1, 1]) {
+    boy.eyes.push(put(boy.head, new THREE.SphereGeometry(0.023, 12, 12), mHair, sx * 0.062, 0.0, 0.156));
+    put(boy.head, new THREE.SphereGeometry(0.03, 12, 12), mSuit, sx * 0.106, -0.052, 0.126).scale.set(1, 0.7, 0.35); // cheeks
+    put(boy.head, new THREE.TorusGeometry(0.045, 0.012, 8, 20), mats.chrome, sx * 0.058, 0.108, 0.122).rotation.x = -0.6; // goggles, pushed up
+    const arm = new THREE.Group();
+    arm.position.set(sx * 0.125, 0.3, 0);
+    put(arm, new THREE.CapsuleGeometry(0.035, 0.13, 4, 10), mSuit, 0, -0.09, 0);
+    put(arm, new THREE.SphereGeometry(0.042, 12, 12), mSkin, 0, -0.185, 0);
+    boy.body.add(arm);
+    boy.arms.push(arm);
+    const leg = new THREE.Group();
+    leg.position.set(sx * 0.062, 0.1, 0.04);
+    put(leg, new THREE.CapsuleGeometry(0.042, 0.12, 4, 10), mSuit, 0, -0.1, 0);
+    put(leg, new THREE.SphereGeometry(0.056, 12, 12), mHair, 0, -0.2, 0.012);
+    boy.body.add(leg);
+    boy.legs.push(leg);
+  }
+  put(boy.head, new THREE.TorusGeometry(0.028, 0.006, 6, 14, Math.PI), mHair, 0, -0.056, 0.159).rotation.z = Math.PI; // smile
+
   // ---------- wireframe ground ----------
   const NX = 64;
   const NZ = 34;
@@ -396,6 +452,7 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     lid: 0,
     lidHold: null,
     again: false,
+    pilot: 0,
   };
   const sac = new THREE.Vector3();
   const tmpQ = new THREE.Quaternion();
@@ -511,6 +568,31 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     U.spike.value = lerp(U.spike.value, Math.max(0, n - 0.45) * 1.5, k);
     blobMat.roughness = 0.05 + Math.max(0, n - 0.8) * 0.3;
 
+    // the pilot
+    const pTo = S.n >= 0.995 ? 1 : 0;
+    S.pilot += (pTo - S.pilot) * (1 - Math.exp(-dt * (pTo ? 3.2 : 9)));
+    U.pilot.value = S.pilot;
+    pilot.visible = S.pilot > 0.01;
+    if (pilot.visible) {
+      const a = S.pilot;
+      const tt = now / 1000;
+      pilot.scale.setScalar(1.2 * Math.max(0.001, 1 + 2.2 * Math.pow(a - 1, 3) + 1.2 * Math.pow(a - 1, 2)));
+      pilot.position.copy(SEAT).multiplyScalar(1 - (1 - a) * 0.4);
+      boy.body.position.y = Math.sin(tt * 2.2) * 0.012;
+      boy.body.rotation.z = Math.sin(tt * 1.1) * 0.05;
+      boy.head.rotation.y = lerp(boy.head.rotation.y, S.pointer.x * 0.7, k);
+      boy.head.rotation.x = lerp(boy.head.rotation.x, -S.pointer.y * 0.35, k);
+      boy.head.rotation.z = Math.sin(tt * 0.9) * 0.1;
+      boy.legs[0].rotation.x = -1.25 + Math.sin(tt * 3.2) * 0.4;
+      boy.legs[1].rotation.x = -1.25 - Math.sin(tt * 3.2) * 0.4;
+      boy.wave = lerp(boy.wave, tt % 5.5 < 2 ? 1 : 0, 1 - Math.exp(-dt * 8));
+      boy.arms[1].rotation.z = lerp(0.25, 2.5 + Math.sin(tt * 11) * 0.35, boy.wave);
+      boy.arms[0].rotation.z = -0.25 - Math.sin(tt * 2.2) * 0.06;
+      const bl = tt % 3.7 < 0.12 ? 0.1 : 1;
+      boy.eyes[0].scale.y = boy.eyes[1].scale.y = bl;
+      boy.tail.rotation.z = 0.5 + Math.sin(tt * 5) * 0.25;
+    }
+
     // orbits
     S.spinVel *= Math.exp(-dt * 2.2);
     S.spin += S.spinVel * dt + dt * 0.05 * speed;
@@ -575,6 +657,11 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
       tmp.copy(eye.position).project(camera);
       const worldH = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
       return { x: (tmp.x * 0.5 + 0.5) * S.w, y: (-tmp.y * 0.5 + 0.5) * S.h, r: (S.scale * S.h) / worldH };
+    },
+    pilotScreen() {
+      if (S.pilot < 0.6) return null;
+      boy.head.getWorldPosition(tmp).project(camera);
+      return { x: (tmp.x * 0.5 + 0.5) * S.w, y: (-tmp.y * 0.5 + 0.5) * S.h, s: S.scale };
     },
     gaze() { return { x: U.eye.value.x, y: U.eye.value.y, pupil: EU.uPupil.value }; },
     hitEye(cx, cy) {

@@ -134,7 +134,7 @@ function setN(v, fromUser = true) {
   const pct = Math.round(n * 100);
   root.style.setProperty('--n', n.toFixed(3));
   dialOut.textContent = pct;
-  dialState.textContent = pct === 0 ? '正気' : pct < 40 ? 'まだ読める' : pct < 80 ? 'だいぶおかしい' : '解読不能';
+  dialState.textContent = pct === 0 ? '正気' : pct < 40 ? 'まだ読める' : pct < 80 ? 'だいぶおかしい' : pct < 100 ? '解読不能' : '操縦士、登場';
   if (!fromUser) dial.value = pct;
   scene?.setNonsense(n);
 }
@@ -413,6 +413,21 @@ function drawBars(t) {
   }
 }
 
+/* ---------- the pilot's speech bubble ---------- */
+const say = document.createElement('div');
+say.className = 'say';
+say.setAttribute('aria-hidden', 'true');
+document.body.append(say);
+const LINES = ['やあ！', 'ここ、ぼくの操縦席。', '100 まで回したね。', '目は、ぼくが動かしてるよ。'];
+function drawSay(t) {
+  const p = scene?.pilotScreen();
+  const on = !!p && zone < 0.4 && !sheet.open;
+  say.classList.toggle('on', on);
+  if (!on) return;
+  say.textContent = LINES[Math.floor(t / 3.2) % LINES.length];
+  say.style.transform = `translate(${(p.x + 46 * p.s).toFixed(1)}px, ${Math.max(p.y - 34 * p.s, 64).toFixed(1)}px)`;
+}
+
 /* ---------- telemetry ---------- */
 const tPupil = $('#t-pupil');
 const tGaze = $('#t-gaze');
@@ -457,6 +472,7 @@ function loop(now) {
   const t = now / 1000;
   if (zone < 1 && !reduced) drawBars(t);
   if (tick % 6 === 0) drawTele();
+  if (tick % 3 === 0) drawSay(t);
   // hero letters drift with the dial
   if (!reduced && zone < 1) {
     const fs = parseFloat(getComputedStyle(title).fontSize);

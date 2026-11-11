@@ -316,3 +316,7 @@ h2 { font-family: var(--display); font-weight: 800; line-height: 1.12; letter-sp
   .tele dd { min-width: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .bars { display: none; } }
+
+/* ---------- pilot ---------- */
+.say { position: fixed; left: 0; top: 0; z-index: 5; pointer-events: none; padding: 0.35rem 0.8rem; background: var(--paper); border: 1.5px solid var(--ink); border-radius: 999px 999px 999px 4px; font-weight: 700; font-size: 0.9rem; white-space: nowrap; opacity: 0; transition: opacity 0.2s linear; }
+.say.on { opacity: 1; }
