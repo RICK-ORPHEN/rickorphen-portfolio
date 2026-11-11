@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja" data-theme="paper">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RICK ORPHEN — 仕事の記録</title>
+  <meta name="description" content="RICK ORPHEN のポートフォリオ。会社向けの AI 業務基盤・セキュリティ・映像と、個人向けの AI プロダクト・スクール。" />
+  <meta name="theme-color" content="#D9DAD6" />
+  <meta property="og:title" content="RICK ORPHEN — 仕事の記録" />
+  <meta property="og:description" content="会社向けの AI 業務基盤・セキュリティ・映像と、個人向けの AI プロダクト・スクール。" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <a class="skip" href="#works">仕事の一覧へ進む</a>
+
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="lid lid-top" aria-hidden="true"></div>
+  <div class="lid lid-bottom" aria-hidden="true"></div>
+
+  <header class="bar">
+    <a class="mark" href="#top" aria-label="RICK ORPHEN 先頭へ">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M4 50Q50 8 96 50Q50 92 4 50Z" fill="currentColor"/><circle cx="50" cy="50" r="19" fill="var(--paper)"/><circle class="pupil" cx="50" cy="50" r="8" fill="var(--red)"/></svg>
+      <span>Rick Orphen</span>
+    </a>
+    <nav aria-label="ページ内">
+      <a href="#works">仕事</a>
+      <a href="#about">人</a>
+      <a href="#contact">連絡</a>
+    </nav>
+    <div class="dial">
+      <label for="dial">訳わからなさ</label>
+      <input id="dial" type="range" min="0" max="100" value="35" aria-describedby="dial-state" />
+      <output id="dial-out" for="dial">35</output>
+      <span id="dial-state" class="dial-state">まだ読める</span>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title" class="hero-title" aria-label="RICK ORPHEN">
+        <span class="line line-a" aria-hidden="true"></span>
+        <span class="line line-b" aria-hidden="true"></span>
+      </h1>
+      <div class="hero-foot">
+        <p class="hero-who"><strong>AI を、仕事に実装する。</strong></p>
+        <p class="hero-say">会社向けと個人向け、両方の現場でプロダクトを作っています。下に、作り込んだものを並べました。</p>
+        <button type="button" class="hero-hint"><span class="hint-dot" aria-hidden="true"></span>目を押すと、世界が裏返ります。</button>
+      </div>
+      <div class="labels" aria-hidden="true"></div>
+    </section>
+
+    <section id="works" class="works" aria-labelledby="works-title">
+      <header class="sec-head">
+        <h2 id="works-title"><span data-scramble>仕事</span></h2>
+        <p>作り込んだものを、相手で分けて並べています。名前を押すと中身が開きます。</p>
+      </header>
+      <div id="work-groups"></div>
+    </section>
+
+    <section id="about" class="about" aria-labelledby="about-title">
+      <h2 id="about-title"><span data-scramble>営業を統括して、</span><br /><span data-scramble>プロダクトも作る。</span></h2>
+      <div class="about-body">
+        <p>RICK ORPHEN。SQUARE ONE Inc. の AI Division で営業を統括しながら、売るものを自分でも作っています。</p>
+        <p>会社には、業務基盤とセキュリティと映像を。個人には、AI プロダクトとスクールを。相手が変わっても、やっていることは同じで、AI を仕事の中に置くことです。</p>
+        <dl class="about-list">
+          <div><dt>所属</dt><dd>SQUARE ONE Inc.｜AI Division</dd></div>
+          <div><dt>役割</dt><dd>営業統括・プロダクト制作</dd></div>
+          <div><dt>名前</dt><dd>RICK ORPHEN</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="contact" class="contact" aria-labelledby="contact-title">
+      <div class="eyes" aria-hidden="true"></div>
+      <h2 id="contact-title"><span data-scramble>訳のわからないものを、</span><br /><span data-scramble>一緒に作りましょう。</span></h2>
+      <p class="contact-links">
+        <a class="btn" href="https://square-one.co.jp/" target="_blank" rel="noopener">SQUAREONE のサイトを開く</a>
+        <a class="btn btn-ghost" href="https://www.squareone-academy.com/" target="_blank" rel="noopener">Academy を開く</a>
+      </p>
+      <footer class="foot">
+        <span>© 2026 RICK ORPHEN</span>
+        <button type="button" class="foot-reset" id="calm">訳わからなさを 0 に戻す</button>
+      </footer>
+    </section>
+  </main>
+
+  <div class="thumb" aria-hidden="true"><img alt="" /></div>
+  <div class="pet" aria-hidden="true"></div>
+
+  <dialog class="sheet" id="sheet" aria-labelledby="sheet-name">
+    <button type="button" class="sheet-close" id="sheet-close">閉じる</button>
+    <div class="sheet-grid">
+      <div class="sheet-text">
+        <p class="sheet-group" id="sheet-group"></p>
+        <h2 id="sheet-name"></h2>
+        <p class="sheet-lead" id="sheet-lead"></p>
+        <p class="sheet-body" id="sheet-body"></p>
+        <dl class="sheet-facts" id="sheet-facts"></dl>
+        <p class="sheet-actions" id="sheet-actions"></p>
+      </div>
+      <div class="sheet-visual" id="sheet-visual"></div>
+    </div>
+    <div class="sheet-nav">
+      <button type="button" id="sheet-prev">前の仕事</button>
+      <button type="button" id="sheet-next">次の仕事</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
