@@ -245,16 +245,19 @@ function fill(i) {
     ? `<header class="cases-head"><h3>事例</h3><p>${w.cases.length} 件</p></header>` +
       w.cases
         .map(
-          (c) => `<article class="case">
-        <a class="shot${fine ? '' : ' show'}" href="${c.url}" target="_blank" rel="noopener" aria-label="${c.title} を Operation Docs で開く">
-          <img src="/shots/${c.img}-ht.webp" alt="" loading="lazy" />
-          <img class="real" src="/shots/${c.img}.webp" alt="${c.title} の一場面" loading="lazy" />
-        </a>
+          (c) => `<article class="case${c.tall ? ' tall' : ''}">
+        <video controls playsinline preload="none" poster="/video/${c.clips[0].src}.jpg" src="/video/${c.clips[0].src}.mp4" aria-label="${c.title}"></video>
+        ${
+          c.clips.length > 1
+            ? `<div class="clips" role="group" aria-label="${c.title} の動画を選ぶ">${c.clips
+                .map((k, n) => `<button type="button" data-src="${k.src}" aria-pressed="${n === 0}">${k.label}</button>`)
+                .join('')}</div>`
+            : ''
+        }
         <span class="case-no">${c.no}</span>
         <h4>${c.title}</h4>
         <p class="case-spec">${c.spec}</p>
         <p class="case-note">${c.note}</p>
-        <p class="case-link"><a href="${c.url}" target="_blank" rel="noopener">Operation Docs で開く</a>${c.gated ? '（契約者向けのページ）' : ''}</p>
       </article>`
         )
         .join('')
@@ -271,10 +274,24 @@ function openSheet(i, ev) {
   if (!sheet.open) sheet.showModal();
   thumb.classList.remove('on');
 }
+// cases: one video plays at a time; clip buttons swap the source
+const casesEl = $('#sheet-cases');
+const stopVideos = (except) => $$('video', casesEl).forEach((v) => v !== except && v.pause());
+casesEl.addEventListener('play', (e) => stopVideos(e.target), true);
+casesEl.addEventListener('click', (e) => {
+  const b = e.target.closest('.clips button');
+  if (!b) return;
+  const v = $('video', b.closest('.case'));
+  $$('button', b.parentElement).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  v.poster = `/video/${b.dataset.src}.jpg`;
+  v.src = `/video/${b.dataset.src}.mp4`;
+  v.play().catch(() => {});
+});
 $('#sheet-close').addEventListener('click', () => sheet.close());
 $('#sheet-prev').addEventListener('click', () => fill(current - 1));
 $('#sheet-next').addEventListener('click', () => fill(current + 1));
 sheet.addEventListener('close', () => {
+  stopVideos();
   history.replaceState(null, '', location.pathname);
   $(`.row[data-id="${works[current].id}"]`)?.focus({ preventScroll: true });
 });
