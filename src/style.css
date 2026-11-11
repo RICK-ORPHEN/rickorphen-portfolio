@@ -363,3 +363,37 @@ h2 { font-family: var(--display); font-weight: 800; line-height: 1.12; letter-sp
 .form-note { min-height: 1.6em; font-size: 0.9rem; font-weight: 700; }
 .form-note.ng { color: var(--red); }
 @media (max-width: 760px) { .contact-cols { grid-template-columns: 1fr; } }
+/* ---------- career: a résumé the pilot scribbled on ---------- */
+.about-body .btn { cursor: pointer; font: inherit; font-weight: 700; }
+.cv-wrap { max-width: 62rem; margin: 0 auto; padding: clamp(4.5rem, 10vh, 6.5rem) var(--pad) 3rem; }
+.cv-head { display: grid; grid-template-columns: minmax(0, 1fr) clamp(7rem, 16vw, 11rem); gap: 1.5rem clamp(1rem, 4vw, 3rem); align-items: end; }
+.cv-kicker { font-size: 0.85rem; font-weight: 700; color: var(--pen); }
+.cv h2 { font-size: clamp(2.6rem, 8vw, 6.5rem); line-height: 1.05; margin-top: 0.25rem; }
+.cv-id { margin-top: 1.25rem; border-top: 1px solid var(--ink); }
+.cv-id div { display: grid; grid-template-columns: 4em 1fr; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); }
+.cv-id dt { font-weight: 700; }
+.cv-photo { margin: 0; border: 1px solid var(--ink); aspect-ratio: 3 / 4; display: grid; grid-template-rows: 1fr auto; background: var(--paper); transform: rotate(2deg); }
+.cv-photo svg { width: 100%; height: 100%; padding: 8%; }
+.cv-photo figcaption { text-align: center; font-size: 0.72rem; border-top: 1px solid var(--ink); padding: 0.2rem; }
+.pen-head * { stroke: var(--pen); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; fill: var(--paper); }
+.pen-head .nofill { fill: none; }
+.pen-head .thin { stroke-width: 1.3; }
+.pen-head .dot { fill: var(--pen); stroke: none; }
+.cv-table { margin-top: clamp(1.5rem, 4vh, 3rem); border: 1px solid var(--ink); }
+.cv-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-bottom: 1px solid var(--ink); }
+.cv-row:last-child { border-bottom: 0; }
+.cv-row > p { padding: 0.9rem 1.1rem; }
+.cv-row > p + p { border-left: 1px solid var(--ink); }
+.cv-th { font-weight: 700; font-size: 0.85rem; background: var(--ink); color: var(--paper); }
+.cv-fact { font-family: var(--display); font-weight: 800; font-size: clamp(1.05rem, 1.7vw, 1.35rem); line-height: 1.6; }
+.cv-note { color: var(--pen); font-weight: 700; transform: rotate(-0.6deg); }
+.cv-row:nth-child(even) .cv-note { transform: rotate(0.5deg); }
+.cv-wish { margin-top: 1.5rem; border: 1px solid var(--ink); }
+.cv-wish-label { font-size: 0.85rem; font-weight: 700; padding: 0.4rem 1.1rem; border-bottom: 1px solid var(--ink); }
+.cv-wish-text { padding: 1.2rem 1.1rem 1.5rem; color: var(--pen); font-family: var(--display); font-weight: 800; font-size: clamp(1.9rem, 6vw, 4.5rem); line-height: 1.2; transform: rotate(-1.2deg); }
+.cv-actions { margin-top: 1.75rem; }
+@media (max-width: 760px) {
+  .cv-row { grid-template-columns: 1fr; }
+  .cv-row > p + p { border-left: 0; border-top: 1px dashed color-mix(in srgb, var(--ink) 40%, transparent); }
+  .cv-th p + p { display: none; }
+}
