@@ -16,7 +16,7 @@ const SVG = `
         <g data-p="armL"><path d="M-23 -58C-37 -50 -40 -34 -34 -20" class="nofill" /><circle cx="-34" cy="-17" r="5.5" /></g>
         <path d="M-25 2C-30 -38 -21 -72 0 -72C21 -72 30 -38 25 2Z" />
         <path d="M0 -66V-6M-8 -71L0 -62L8 -71" class="nofill" />
-        <path d="M2 -44q10 -9 20 0q-10 9 -20 0z" class="pen thin" /><circle cx="12" cy="-44" r="3.6" class="thin" /><circle cx="12" cy="-44" r="1.6" class="reddot" />
+        <path d="M8 -47q5.5 -5 11 0q-5.5 5 -11 0z" class="pen hair" /><circle cx="13.5" cy="-47" r="2" class="hair" /><circle cx="13.5" cy="-47" r="0.9" class="reddot" />
         <g data-p="armR">
           <path d="M23 -58C37 -50 40 -34 34 -20" class="nofill" /><circle cx="34" cy="-17" r="5.5" />
           <g data-p="spy" style="display:none"><path d="M26 -14h20l4 -3v-9l-4 -3h-20zM50 -17h16v-9h-16" /></g>

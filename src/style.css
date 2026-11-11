@@ -342,3 +342,4 @@ h2 { font-family: var(--display); font-weight: 800; line-height: 1.12; letter-sp
 .say { border-color: var(--pen); border-width: 1.5px; color: var(--pen); }
 .boy .pen { fill: var(--pen); }
 .boy .reddot { fill: var(--red); stroke: none; }
+.boy .hair { stroke-width: 0.9; }
