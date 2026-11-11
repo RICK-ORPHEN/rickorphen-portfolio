@@ -505,7 +505,7 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     const k = 1 - Math.exp(-dt * 4.5);
 
     const [kx, ky, ks, kh, kt] = keyframe();
-    target.set(kx, ky, 0);
+    target.set(kx, ky - 0.45 * S.pilot, 0); // make headroom for the pilot under the top bar
     eye.position.lerp(target, k);
     S.scale = lerp(S.scale, ks, k);
     S.half = lerp(S.half, kh, k);
