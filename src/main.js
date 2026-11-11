@@ -103,6 +103,8 @@ try {
   root.classList.add('no-webgl');
 }
 
+window.rickEye = scene; // try rickEye.blink() in the console
+
 /* ---------- labels that ride the satellites ---------- */
 const labelEls = {};
 const labelsEl = $('.labels');

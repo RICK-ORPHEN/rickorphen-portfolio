@@ -295,6 +295,25 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     sats.push(mesh);
   });
 
+  // ---------- eyelids: chrome shells hinged at the corners of the eye ----------
+  const LID_R = 0.676;
+  const lidMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 1, roughness: 0.09, envMapIntensity: 1.2, side: THREE.DoubleSide });
+  const lids = new THREE.Group();
+  eye.add(lids);
+  const makeLid = (upper) => {
+    const shell = new THREE.Mesh(new THREE.SphereGeometry(LID_R, 56, 20, 0, Math.PI * 2, upper ? 0 : Math.PI / 2, Math.PI / 2), lidMat);
+    // a dark lash line along the edge that sweeps across the eye
+    shell.add(new THREE.Mesh(new THREE.TorusGeometry(LID_R, 0.013, 8, 56, Math.PI).rotateX(Math.PI / 2), mats.ink));
+    lids.add(shell);
+    return shell;
+  };
+  const lidUp = makeLid(true);
+  const lidLow = makeLid(false);
+  const DEG = Math.PI / 180;
+  const vRight = new THREE.Vector3();
+  const vUp = new THREE.Vector3();
+  const basis = new THREE.Matrix4();
+
   // ---------- wireframe ground ----------
   const NX = 64;
   const NZ = 34;
@@ -368,7 +387,10 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     pointerAt: -1e9,
     pupilBase: 0.34,
     sacT: 0,
-    nextBlink: 4,
+    nextBlink: 2.5,
+    lid: 0,
+    lidHold: null,
+    again: false,
   };
   const sac = new THREE.Vector3();
   const tmpQ = new THREE.Quaternion();
@@ -427,15 +449,23 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     S.half = lerp(S.half, kh, k);
     S.terr = lerp(S.terr, kt, k);
 
-    // blink: the eyeball sinks back and the chrome closes over it
+    // blink: quick close, slower open, now and then a double blink
     S.nextBlink -= dt;
-    if (S.nextBlink < 0 && S.blinkT < 0) { S.blinkT = 0; S.nextBlink = 3.5 + Math.random() * 4; }
-    let prot = 0.47;
-    if (S.blinkT >= 0) {
-      S.blinkT += dt / 0.4;
-      if (S.blinkT >= 1) S.blinkT = -1;
-      else prot = 0.47 - Math.sin(Math.PI * S.blinkT) * 0.2;
+    if (S.nextBlink < 0 && S.blinkT < 0) {
+      S.blinkT = 0;
+      S.again = !S.again && Math.random() < 0.18;
+      S.nextBlink = S.again ? 0.16 : 2.2 + Math.random() * 4.5;
     }
+    let shut = 0;
+    if (S.blinkT >= 0) {
+      S.blinkT += dt / 0.34;
+      if (S.blinkT >= 1) S.blinkT = -1;
+      else if (S.blinkT < 0.3) shut = Math.pow(S.blinkT / 0.3, 1.8);
+      else shut = Math.pow(1 - (S.blinkT - 0.3) / 0.7, 2.4);
+    }
+    if (S.lidHold !== null) shut = S.lidHold;
+    S.lid = shut;
+    const prot = 0.47 - shut * 0.025;
     eyeball.position.y = wet.position.y = prot;
     eye.scale.setScalar(S.scale);
     rig.position.copy(eye.position);
@@ -454,6 +484,16 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     if (!reducedMotion) eyeTarget.add(sac).normalize();
     U.eye.value.lerp(eyeTarget, 1 - Math.exp(-dt * 7)).normalize();
     look.quaternion.setFromUnitVectors(UP, U.eye.value);
+    // lids ride with the gaze, hinge on a level axis; the upper lid does most of the travel
+    vRight.crossVectors(UP, U.eye.value);
+    if (vRight.lengthSq() < 1e-4) vRight.set(1, 0, 0);
+    vRight.normalize();
+    vUp.crossVectors(U.eye.value, vRight);
+    lids.quaternion.setFromRotationMatrix(basis.makeBasis(vRight, vUp, U.eye.value));
+    lids.position.copy(U.eye.value).multiplyScalar(0.47 - S.lid * 0.025);
+    const rest = 44 + U.eye.value.y * 10; // looking down lowers the upper lid a little
+    lidUp.rotation.x = -lerp(rest, -15, S.lid) * DEG;
+    lidLow.rotation.x = -lerp(-55, -15, Math.min(1, S.lid * 1.05)) * DEG;
     EU.uLightObj.value.copy(LIGHT).applyQuaternion(tmpQ.copy(look.quaternion).invert());
     const pupilTo = S.pupilBase + (S.hi ? 0.09 : 0) + Math.sin(U.time.value * 1.9) * 0.012 + (S.blinkT >= 0 ? 0.06 : 0);
     EU.uPupil.value = lerp(EU.uPupil.value, pupilTo, 1 - Math.exp(-dt * 3.5));
@@ -514,6 +554,7 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     highlight(id) { S.hi = id; },
     spin(dx) { S.spinVel += dx * 0.012; },
     blink() { S.blinkT = 0; },
+    holdLid(v) { S.lidHold = v; },
     onLabels(fn) { S.onLabels = fn; },
     setTheme(theme) {
       ink.set(theme === 'void' ? PAPER : '#000000');
