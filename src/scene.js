@@ -42,8 +42,10 @@ float roDisp(vec3 p){
   float a = ro_snoise(p*1.15 + vec3(0.0, t*0.22, t*0.10)) * 0.62
           + ro_snoise(p*2.4 - vec3(t*0.18, 0.0, t*0.12)) * 0.26;
   float sp = pow(max(ro_snoise(p*3.6 + vec3(t*0.3)), 0.0), 2.5);
-  float mask = 1.0 - smoothstep(0.72, 0.93, dot(p, uEye));
-  return (a * uAmp + sp * uSpike) * mask;
+  float d = dot(p, uEye);
+  float mask = 1.0 - smoothstep(0.66, 0.84, d);
+  float lid = smoothstep(0.70, 0.80, d) * (1.0 - smoothstep(0.80, 0.86, d));
+  return (a * uAmp + sp * uSpike) * mask + lid * 0.05;
 }`;
 
 const HALFTONE = {
@@ -79,13 +81,13 @@ const HALFTONE = {
 
 // [x, y, scale, halftone, terrain]
 const KF_LAND = [
-  [0.0, 0.05, 1.22, 0, 0.0],
+  [0.0, 0.0, 1.4, 0, 0.0],
   [4.2, -1.95, 0.72, 0, 0.0],
   [-2.7, 0.0, 1.65, 1, 0.1],
   [3.0, 0.75, 0.9, 0, 1.0],
 ];
 const KF_PORT = [
-  [0.0, -0.2, 0.74, 0, 0.0],
+  [0.0, 0.4, 0.7, 0, 0.0],
   [1.05, -2.45, 0.3, 0, 0.0],
   [0.0, -2.0, 0.85, 1, 0.1],
   [0.85, -1.25, 0.36, 0, 1.0],
@@ -158,18 +160,90 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
   const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 40), blobMat);
   eye.add(blob);
 
-  // iris / pupil as spherical caps that slide over the surface
+  // a wet, realistic eyeball that sits in a socket of the chrome and rolls to follow the pointer
   const look = new THREE.Group();
   eye.add(look);
-  const cap = (radius, angle, material) => new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 12, 0, Math.PI * 2, 0, angle), material);
-  const irisMat = new THREE.MeshBasicMaterial({ color: ink });
-  const pupilMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(RED) });
-  const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  look.add(cap(1.004, 0.4, irisMat));
-  look.add(cap(1.009, 0.15, pupilMat));
-  const glint = cap(1.013, 0.045, glintMat);
-  glint.rotation.set(0.2, 0, -0.22);
-  look.add(glint);
+  const LIGHT = new THREE.Vector3(-0.45, 0.75, 0.6).normalize();
+  const EU = {
+    uPupil: { value: 0.34 },
+    uTime: U.time,
+    uLight: { value: LIGHT },
+    uLightObj: { value: new THREE.Vector3(0, 0, 1) },
+  };
+  const eyeballMat = new THREE.ShaderMaterial({
+    uniforms: EU,
+    vertexShader: /* glsl */ `
+      varying vec3 vObjPos; varying vec3 vObjCam; varying vec3 vWorldN;
+      void main(){
+        vObjPos = position;
+        vObjCam = (inverse(modelMatrix) * vec4(cameraPosition, 1.0)).xyz;
+        vWorldN = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: /* glsl */ `
+      ${NOISE}
+      uniform float uPupil; uniform float uTime; uniform vec3 uLight; uniform vec3 uLightObj;
+      varying vec3 vObjPos; varying vec3 vObjCam; varying vec3 vWorldN;
+      const float IRIS = 0.60;
+      void main(){
+        vec3 N = normalize(vObjPos);
+        vec3 V = normalize(vObjCam - vObjPos);
+        float ang = acos(clamp(N.y, -1.0, 1.0));
+        // the iris lies behind the cornea: refract the view ray and intersect the iris plane
+        vec3 rd = refract(-V, N, 1.0 / 1.38);
+        float planeY = cos(IRIS) - 0.05;
+        float t = (planeY - N.y) / min(rd.y, -0.08);
+        vec3 hit = N + rd * t;
+        vec2 ic = hit.xz / sin(IRIS);
+        float inCornea = smoothstep(IRIS + 0.05, IRIS - 0.04, ang);
+        float r = mix(ang / IRIS, length(ic), inCornea);
+        vec2 dir = ic / max(length(ic), 1e-4);
+
+        // iris: radial fibres, crypts, an amber collarette and a dark limbal ring
+        float f1 = ro_snoise(vec3(dir * 4.0, r * 1.1));
+        float f2 = ro_snoise(vec3(dir * 15.0, r * 2.6 + 5.0));
+        float f3 = ro_snoise(vec3(dir * 46.0, r * 3.5 + 11.0));
+        float fib = f1 * 0.35 + f2 * 0.4 + f3 * 0.3;
+        vec3 deep = vec3(0.05, 0.13, 0.24);
+        vec3 lightC = vec3(0.46, 0.66, 0.78);
+        vec3 iris = mix(deep, lightC, smoothstep(-0.35, 0.55, fib));
+        float crypt = smoothstep(0.45, 0.8, ro_snoise(vec3(ic * 5.0, 2.0)));
+        iris *= 1.0 - crypt * 0.45 * smoothstep(0.35, 0.6, r) * (1.0 - smoothstep(0.75, 0.95, r));
+        float col = smoothstep(uPupil + 0.26, uPupil + 0.02, r);
+        iris = mix(iris, vec3(0.70, 0.46, 0.16), col * (0.55 + 0.35 * f2));
+        iris *= mix(1.0, 0.16, smoothstep(0.80, 1.0, r));
+        float caustic = clamp(dot(dir, -normalize(uLightObj.xz + 1e-4)) * 0.5 + 0.5, 0.0, 1.0);
+        iris *= 0.7 + caustic * 0.9;
+        float pup = smoothstep(uPupil, uPupil - 0.04, r + f3 * 0.012);
+        iris = mix(iris, vec3(0.004), pup);
+
+        // sclera: off-white, pinker and veined toward the back
+        vec3 q = N * 3.0;
+        float w = ro_snoise(q * 1.3);
+        float v1 = pow(1.0 - abs(ro_snoise(q * 2.1 + w * 0.9)), 11.0);
+        float v2 = pow(1.0 - abs(ro_snoise(q * 5.2 + w * 1.6 + 7.0)), 14.0);
+        float back = smoothstep(IRIS + 0.03, IRIS + 0.45, ang);
+        vec3 scl = mix(vec3(0.95, 0.93, 0.90), vec3(0.90, 0.70, 0.66), back * 0.45);
+        scl = mix(scl, vec3(0.52, 0.06, 0.05), clamp(v1 * 0.85 + v2 * 0.55, 0.0, 1.0) * (0.2 + back) * 0.9);
+
+        vec3 base = mix(scl, iris, smoothstep(1.04, 0.96, r));
+        base *= mix(0.72, 1.0, smoothstep(1.0, 1.12, r) + step(r, 1.0)); // soft shadow ring just outside the limbus
+
+        // lighting: wrapped diffuse, plus occlusion where the chrome lid closes in
+        float ndl = dot(normalize(vWorldN), normalize(uLight));
+        float diff = 0.38 + 0.72 * pow(clamp(ndl * 0.5 + 0.5, 0.0, 1.0), 1.4);
+        float ao = mix(0.22, 1.0, smoothstep(0.54, 0.84, N.y));
+        vec3 c = base * diff * ao;
+        gl_FragColor = vec4(pow(c, vec3(2.2)), 1.0);
+      }`,
+  });
+  const eyeball = new THREE.Mesh(new THREE.SphereGeometry(0.66, 72, 48), eyeballMat);
+  // the wet film: reflections only, added on top
+  const wet = new THREE.Mesh(
+    new THREE.SphereGeometry(0.664, 72, 48),
+    new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: 0.02, metalness: 0, envMapIntensity: 2.6, clearcoat: 1, clearcoatRoughness: 0, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false })
+  );
+  look.add(eyeball, wet);
 
   // ---------- orbits & satellites ----------
   const rig = new THREE.Group();
@@ -292,7 +366,12 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     scale: 1,
     onLabels: null,
     pointerAt: -1e9,
+    pupilBase: 0.34,
+    sacT: 0,
+    nextBlink: 4,
   };
+  const sac = new THREE.Vector3();
+  const tmpQ = new THREE.Quaternion();
   const target = new THREE.Vector3();
   const eyeTarget = new THREE.Vector3(0, 0, 1);
   const tmp = new THREE.Vector3();
@@ -333,7 +412,8 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
 
   let last = performance.now();
   function frame(now) {
-    const dt = Math.min((now - last) / 1000, 0.05);
+    // rAF can hand back a timestamp older than `last` after a long first task; never step backwards
+    const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
     last = now;
     const n = S.n;
     const speed = reducedMotion ? 0.12 : 0.6 + n * 1.5;
@@ -347,14 +427,17 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     S.half = lerp(S.half, kh, k);
     S.terr = lerp(S.terr, kt, k);
 
-    // blink squash
-    let squash = 1;
+    // blink: the eyeball sinks back and the chrome closes over it
+    S.nextBlink -= dt;
+    if (S.nextBlink < 0 && S.blinkT < 0) { S.blinkT = 0; S.nextBlink = 3.5 + Math.random() * 4; }
+    let prot = 0.47;
     if (S.blinkT >= 0) {
-      S.blinkT += dt / 0.38;
+      S.blinkT += dt / 0.4;
       if (S.blinkT >= 1) S.blinkT = -1;
-      else squash = 1 - Math.sin(Math.PI * S.blinkT) * 0.93;
+      else prot = 0.47 - Math.sin(Math.PI * S.blinkT) * 0.2;
     }
-    eye.scale.set(S.scale, S.scale * squash, S.scale);
+    eyeball.position.y = wet.position.y = prot;
+    eye.scale.setScalar(S.scale);
     rig.position.copy(eye.position);
     rig.scale.setScalar(S.scale);
 
@@ -365,8 +448,15 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     if (ray.intersectPlane(plane, tmp)) {
       eyeTarget.copy(tmp).sub(eye.position).normalize();
     }
+    // micro-saccades
+    S.sacT -= dt;
+    if (S.sacT < 0) { S.sacT = 0.25 + Math.random() * 1.2; sac.set((Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05, 0); }
+    if (!reducedMotion) eyeTarget.add(sac).normalize();
     U.eye.value.lerp(eyeTarget, 1 - Math.exp(-dt * 7)).normalize();
     look.quaternion.setFromUnitVectors(UP, U.eye.value);
+    EU.uLightObj.value.copy(LIGHT).applyQuaternion(tmpQ.copy(look.quaternion).invert());
+    const pupilTo = S.pupilBase + (S.hi ? 0.09 : 0) + Math.sin(U.time.value * 1.9) * 0.012 + (S.blinkT >= 0 ? 0.06 : 0);
+    EU.uPupil.value = lerp(EU.uPupil.value, pupilTo, 1 - Math.exp(-dt * 3.5));
 
     U.amp.value = lerp(U.amp.value, 0.05 + n * 0.42, k);
     U.spike.value = lerp(U.spike.value, Math.max(0, n - 0.45) * 1.5, k);
@@ -428,9 +518,15 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     setTheme(theme) {
       ink.set(theme === 'void' ? PAPER : '#000000');
       // materials copy their colour on construction, so update each one
-      for (const m of [irisMat, lineMat, mats.ink]) m.color.copy(ink);
-      glintMat.color.set(theme === 'void' ? '#000000' : '#ffffff');
+      for (const m of [lineMat, mats.ink]) m.color.copy(ink);
+      S.pupilBase = theme === 'void' ? 0.55 : 0.34; // the pupil opens in the dark
     },
+    eyeScreen() {
+      tmp.copy(eye.position).project(camera);
+      const worldH = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      return { x: (tmp.x * 0.5 + 0.5) * S.w, y: (-tmp.y * 0.5 + 0.5) * S.h, r: (S.scale * S.h) / worldH };
+    },
+    gaze() { return { x: U.eye.value.x, y: U.eye.value.y, pupil: EU.uPupil.value }; },
     hitEye(cx, cy) {
       tmp.copy(eye.position).project(camera);
       const sx = (tmp.x * 0.5 + 0.5) * S.w;

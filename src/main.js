@@ -234,9 +234,29 @@ function fill(i) {
         }
       });
     }
+  } else if (w.cases) {
+    vis.innerHTML = `<span class="big-num" aria-hidden="true">${w.cases.length}</span>`;
   } else {
     vis.innerHTML = sigil(w.id, 'big-sigil');
   }
+  $('#sheet-cases').innerHTML = w.cases
+    ? `<header class="cases-head"><h3>事例</h3><p>${w.cases.length} 件</p></header>` +
+      w.cases
+        .map(
+          (c) => `<article class="case">
+        <a class="shot${fine ? '' : ' show'}" href="${c.url}" target="_blank" rel="noopener" aria-label="${c.title} を Operation Docs で開く">
+          <img src="/shots/${c.img}-ht.webp" alt="" loading="lazy" />
+          <img class="real" src="/shots/${c.img}.webp" alt="${c.title} の一場面" loading="lazy" />
+        </a>
+        <span class="case-no">${c.no}</span>
+        <h4>${c.title}</h4>
+        <p class="case-spec">${c.spec}</p>
+        <p class="case-note">${c.note}</p>
+        <p class="case-link"><a href="${c.url}" target="_blank" rel="noopener">Operation Docs で開く</a>${c.gated ? '（契約者向けのページ）' : ''}</p>
+      </article>`
+        )
+        .join('')
+    : '';
   history.replaceState(null, '', `#${w.id}`);
   sheet.scrollTop = 0;
 }
@@ -333,6 +353,62 @@ addEventListener('pointerup', (e) => {
   if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8 && performance.now() - d.t < 500 && scene.hitEye(e.clientX, e.clientY)) flip();
 });
 
+/* ---------- hero bars: stripes that bend around the eye ---------- */
+const bars = $('.bars');
+const NB = 9;
+const barPaths = Array.from({ length: NB }, () => {
+  const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  bars.append(p);
+  return p;
+});
+function drawBars(t) {
+  const box = bars.getBoundingClientRect();
+  if (box.bottom < 0 || !scene) return;
+  const tb = title.getBoundingClientRect();
+  const e = scene.eyeScreen();
+  const ex = e.x - box.left;
+  const ey = e.y - box.top;
+  const R = e.r * 1.5;
+  const top = tb.top - box.top;
+  const floor = $('.hero-foot').getBoundingClientRect().top - box.top - 14;
+  const period = tb.height / NB;
+  const thick = period * 0.4;
+  const W = box.width;
+  const edge = (y0, i) => {
+    const pts = [];
+    for (let k = 0; k <= 40; k++) {
+      const x = (W * k) / 40;
+      const dx = (x - ex) / R;
+      const dy = (y0 - ey) / R;
+      const push = Math.sign(dy || 1) * R * 0.62 * Math.exp(-(dx * dx + dy * dy * 0.7));
+      const wave = Math.sin(x * 0.006 + t * 0.8 + i * 0.9) * n * period * 0.45;
+      pts.push(`${x.toFixed(1)} ${Math.min(y0 + push + wave, floor - (NB - i) * 3).toFixed(1)}`);
+    }
+    return pts;
+  };
+  for (let i = 0; i < NB; i++) {
+    const y = top + period * i + (period - thick) / 2;
+    const a = edge(y, i);
+    const b = edge(y + thick, i).reverse();
+    barPaths[i].setAttribute('d', `M${a.join('L')}L${b.join('L')}Z`);
+  }
+}
+
+/* ---------- telemetry ---------- */
+const tPupil = $('#t-pupil');
+const tGaze = $('#t-gaze');
+const tTime = $('#t-time');
+const t0 = performance.now();
+const sgn = (v) => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(2);
+function drawTele() {
+  if (!scene) return;
+  const g = scene.gaze();
+  tPupil.textContent = `${(2 + g.pupil * 7).toFixed(1)} mm`;
+  tGaze.textContent = `${sgn(g.x)} / ${sgn(g.y)}`;
+  const s = Math.floor((performance.now() - t0) / 1000);
+  tTime.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
 /* ---------- frame loop ---------- */
 const secs = ['.hero', '#works', '#about', '#contact'].map((s) => $(s));
 const title = $('.hero-title');
@@ -360,6 +436,8 @@ function loop(now) {
   scene?.frame(now);
 
   const t = now / 1000;
+  if (zone < 1 && !reduced) drawBars(t);
+  if (tick % 6 === 0) drawTele();
   // hero letters drift with the dial
   if (!reduced && zone < 1) {
     const fs = parseFloat(getComputedStyle(title).fontSize);
@@ -410,5 +488,9 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 /* ---------- deep link ---------- */
-const start = works.findIndex((w) => `#${w.id}` === location.hash);
-if (start >= 0) openSheet(start);
+const fromHash = () => {
+  const i = works.findIndex((w) => `#${w.id}` === location.hash);
+  if (i >= 0) openSheet(i);
+};
+addEventListener('hashchange', fromHash);
+fromHash();

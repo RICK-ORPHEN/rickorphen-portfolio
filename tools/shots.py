@@ -5,7 +5,9 @@ names = {
  'cockpit':'890905-qssqsz','opdocs':'896280-m2uas7','keyless':'871467-26wrfl',
  'studio':'877199-k7sjv8','corp':'988867-8v4vpn','academy':'995551-yo1cv5',
  'body':'432980-3yai34','jibungoto':'446807-lrb668',
+ 'vs08':'735781-mi2x84','vs04':'739319-uo8s2x','vs07':'742369-zdlv4s','vs05':'802944-e8dci9','vs06':'811936-yvsfvj',
 }
+crops = {'vs08': (0, 0, 1056, 807), 'vs04': (0, 76, 1456, 818)}
 import glob, os
 def halftone(im, cell=7, color=(27,44,224)):
     g = np.asarray(im.convert('L'), dtype=np.float32)/255.0
@@ -25,8 +27,9 @@ def halftone(im, cell=7, color=(27,44,224)):
     rgba[..., 3] = (a*255).astype(np.uint8)
     return Image.fromarray(rgba, 'RGBA')
 for name, key in names.items():
-    f = glob.glob(os.path.join(src, f'*{key}*.jpg'))[0]
+    f = glob.glob(os.path.join(src, f'*{key}*'))[0]
     im = Image.open(f).convert('RGB')
+    if name in crops: im = im.crop(crops[name])
     W, H = im.size
     # paint over the mouse pointer captured near the centre of the frame
     bx0, by0, bx1, by1 = int(W*0.485), int(H*0.47), int(W*0.525), int(H*0.60)
