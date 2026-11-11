@@ -5,6 +5,7 @@ import './style.css';
 import { works, groups } from './data.js';
 import { createScene } from './scene.js';
 import { createPilot } from './pilot.js';
+import { createScribbler } from './scribbler.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -466,7 +467,7 @@ let tick = 0;
 function loop(now) {
   zone = zoneNow();
   scene?.setZone(zone);
-  scene?.frame(now);
+  if (!sheet.open && !career.open) scene?.frame(now); // nothing of the 3D is visible behind a full-screen sheet
 
   const t = now / 1000;
   if (zone < 1 && !reduced) drawBars(t);
@@ -524,56 +525,20 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 
-/* ---------- career sheet: the pilot walks down the résumé and scribbles on it ---------- */
+/* ---------- career sheet: the pilot walks over the résumé and scribbles on it ---------- */
 const career = $('#career');
-const cvWrap = $('.cv-wrap', career);
-const cvRunner = $('.cv-runner', career);
-const cvSay = $('.cv-rb', career);
-const cvSteps = $$('.cv-step', career);
-let cvAt = 0;
-let cvTimer = 0;
-function cvMove(el) {
-  const y = el.getBoundingClientRect().top - cvWrap.getBoundingClientRect().top;
-  cvRunner.style.transform = `translateY(${Math.max(0, y - 10).toFixed(0)}px)`;
-}
-function cvNext() {
-  clearTimeout(cvTimer);
-  if (!career.open || cvAt >= cvSteps.length) return;
-  const el = cvSteps[cvAt];
-  // wait until the reader has scrolled this line into view
-  if (el.getBoundingClientRect().top > innerHeight * 0.82) { cvTimer = setTimeout(cvNext, 250); return; }
-  cvAt++;
-  cvSay.classList.remove('on');
-  cvMove(el);
-  cvTimer = setTimeout(() => {
-    el.classList.add('hit');
-    cvRunner.classList.add('scribble');
-    cvSay.textContent = el.dataset.say || '';
-    cvSay.classList.toggle('on', !!el.dataset.say);
-    setTimeout(() => cvRunner.classList.remove('scribble'), 520);
-    cvTimer = setTimeout(cvNext, 1750);
-  }, 560);
-}
-function cvStart() {
-  clearTimeout(cvTimer);
-  cvAt = 0;
-  cvSay.classList.remove('on');
-  if (reduced) { cvSteps.forEach((el) => el.classList.add('hit')); return; }
-  cvSteps.forEach((el) => el.classList.remove('hit'));
-  cvRunner.style.transform = 'translateY(0)';
-  cvTimer = setTimeout(cvNext, 900);
-}
+const scribbler = createScribbler(career, { reduced });
 function cvOpen() {
   if (!career.open) career.showModal();
   career.scrollTop = 0;
   history.replaceState(null, '', '#career');
-  cvStart();
+  scribbler.start();
 }
 $('#career-open').addEventListener('click', cvOpen);
-$('#career-replay').addEventListener('click', () => { career.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' }); cvStart(); });
+$('#career-replay').addEventListener('click', () => { career.scrollTop = 0; scribbler.start(); });
 $('#career-close').addEventListener('click', () => career.close());
 $('#career-contact').addEventListener('click', () => career.close());
-career.addEventListener('close', () => { clearTimeout(cvTimer); if (location.hash === '#career') history.replaceState(null, '', location.pathname); });
+career.addEventListener('close', () => { scribbler.stop(); if (location.hash === '#career') history.replaceState(null, '', location.pathname); });
 
 /* ---------- deep link ---------- */
 const fromHash = () => {
