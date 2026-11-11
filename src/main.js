@@ -225,8 +225,8 @@ function fill(i) {
   const vis = $('#sheet-visual');
   if (w.shot) {
     vis.innerHTML = `<a class="shot" href="${w.url}" target="_blank" rel="noopener" aria-label="${w.name} の画面。サイトを開く">
-      <img src="/shots/${w.shot}-ht.webp" alt="" width="1200" height="620" />
-      <img class="real" src="/shots/${w.shot}.webp" alt="${w.name} の画面" width="1200" height="620" loading="lazy" />
+      <img src="/shots/${w.shot}-ht.webp" alt="" />
+      <img class="real" src="/shots/${w.shot}.webp" alt="${w.name} の画面" loading="lazy" />
     </a><p class="shot-note">${fine ? '網点にカーソルを乗せると、実際の画面になります。' : '画面を押すと、実際の画面になります。'}</p>`;
     if (!fine) {
       const a = $('.shot', vis);
