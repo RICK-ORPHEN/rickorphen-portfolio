@@ -404,6 +404,7 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     lidHold: null,
     again: false,
     pilot: 0,
+    pilotOn: false,
   };
   const sac = new THREE.Vector3();
   const tmpQ = new THREE.Quaternion();
@@ -456,7 +457,7 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     const k = 1 - Math.exp(-dt * 4.5);
 
     const [kx, ky, ks, kh, kt] = keyframe();
-    target.set(kx, ky - 0.45 * S.pilot, 0); // make headroom for the pilot under the top bar
+    target.set(kx, ky - 0.8 * S.pilot * (S.zone < 1 ? 1 - S.zone : 0), 0); // make headroom for the pilot under the top bar
     eye.position.lerp(target, k);
     S.scale = lerp(S.scale, ks, k);
     S.half = lerp(S.half, kh, k);
@@ -520,7 +521,7 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     blobMat.roughness = 0.05 + Math.max(0, n - 0.8) * 0.3;
 
     // the pilot's seat: smooth the chrome under him while he is out
-    const pTo = S.n >= 0.995 ? 1 : 0;
+    const pTo = S.pilotOn ? 1 : 0;
     S.pilot += (pTo - S.pilot) * (1 - Math.exp(-dt * (pTo ? 6 : 4)));
     U.pilot.value = S.pilot;
 
@@ -577,6 +578,7 @@ export function createScene(canvas, works, { reducedMotion = false } = {}) {
     spin(dx) { S.spinVel += dx * 0.012; },
     blink() { S.blinkT = 0; },
     holdLid(v) { S.lidHold = v; },
+    setPilot(on) { S.pilotOn = on; },
     onLabels(fn) { S.onLabels = fn; },
     setTheme(theme) {
       ink.set(theme === 'void' ? PAPER : '#000000');

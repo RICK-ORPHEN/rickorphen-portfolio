@@ -321,10 +321,12 @@ h2 { font-family: var(--display); font-weight: 800; line-height: 1.12; letter-sp
 .say { position: fixed; left: 0; top: 0; z-index: 5; pointer-events: none; padding: 0.35rem 0.8rem; background: var(--paper); border: 1.5px solid var(--ink); border-radius: 999px 999px 999px 4px; font-weight: 700; font-size: 0.9rem; white-space: nowrap; opacity: 0; transition: opacity 0.2s linear; }
 .say.on { opacity: 1; }
 
-.boy { position: fixed; left: 0; top: 0; z-index: 4; pointer-events: none; overflow: visible; }
+.boy { position: fixed; left: 0; top: 0; z-index: 2; pointer-events: none; overflow: visible; }
 .boy * { stroke: var(--ink); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; fill: var(--paper); }
 .boy .nofill { fill: none; }
 .boy .ink { fill: var(--ink); }
 .boy .red { fill: var(--red); stroke-width: 2; }
 .boy .cheek { fill: var(--red); stroke: none; opacity: 0.5; }
 .boy .zzz text { font-family: var(--display); font-size: 22px; font-weight: 700; fill: var(--ink); stroke: none; }
+.boy .thin { stroke-width: 2; }
+.boy .drop { fill: var(--cobalt); stroke: none; }

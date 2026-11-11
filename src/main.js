@@ -414,10 +414,18 @@ function drawBars(t) {
   }
 }
 
-/* ---------- the pilot (hand-drawn, appears at 100) ---------- */
+/* ---------- the pilot (hand-drawn, appears at 100, stays until the dial drops below 80) ---------- */
 const pilot = createPilot();
-const ptrN = { x: 0, y: 0 };
-addEventListener('pointermove', (e) => { ptrN.x = (e.clientX / innerWidth) * 2 - 1; ptrN.y = -(e.clientY / innerHeight) * 2 + 1; });
+const ptr = { x: 0, y: 0, px: -999, py: -999, speed: 0 };
+let jolt = false;
+addEventListener('pointermove', (e) => {
+  ptr.x = (e.clientX / innerWidth) * 2 - 1;
+  ptr.y = -(e.clientY / innerHeight) * 2 + 1;
+  ptr.speed = ptr.speed * 0.6 + Math.hypot(e.clientX - ptr.px, e.clientY - ptr.py) * 0.4;
+  ptr.px = e.clientX;
+  ptr.py = e.clientY;
+});
+dial.addEventListener('input', () => (jolt = true));
 
 /* ---------- telemetry ---------- */
 const tPupil = $('#t-pupil');
@@ -463,7 +471,10 @@ function loop(now) {
   const t = now / 1000;
   if (zone < 1 && !reduced) drawBars(t);
   if (tick % 6 === 0) drawTele();
-  pilot(now, scene ? scene.seatScreen() : null, ptrN, n >= 0.995 && !reduced, zone > 0.45 || sheet.open);
+  ptr.speed *= 0.9;
+  const out = pilot(now, scene ? scene.seatScreen() : null, ptr, { summon: n >= 0.995 && !reduced, keep: n >= 0.8, hide: sheet.open, jolt: jolt && n < 0.995 });
+  jolt = false;
+  scene?.setPilot(out);
   // hero letters drift with the dial
   if (!reduced && zone < 1) {
     const fs = parseFloat(getComputedStyle(title).fontSize);
