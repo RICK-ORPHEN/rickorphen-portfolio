@@ -114,16 +114,31 @@
   <dialog class="sheet cv" id="career" aria-labelledby="cv-title">
     <button type="button" class="sheet-close" id="career-close">閉じる</button>
     <div class="cv-wrap">
+      <div class="cv-runner" aria-hidden="true">
+        <p class="cv-rb"></p>
+        <svg class="pen-head" viewBox="-64 -172 140 214" aria-hidden="true" focusable="false">
+            <path d="M-10 12v24M10 12v24M-18 38h10M8 38h10" class="nofill" />
+            <path d="M-22 12C-26 -30 -18 -72 0 -72C18 -72 26 -30 22 12Z" />
+            <path d="M18 -52C36 -46 46 -32 52 -16" class="nofill" /><path d="M48 -26l18 30" class="nofill" /><path d="M64 0l2 5" class="nofill thin" />
+            <path d="M-42 -110a4 6 0 1 0 0 10M42 -110a4 6 0 1 1 0 10" /><ellipse cx="0" cy="-112" rx="42" ry="38" />
+            <path d="M-41 -120C-44 -158 44 -158 41 -120" class="nofill" />
+            <path d="M-39 -124l5 -13 2 11 6 -17 2 14 7 -19 3 16 7 -18 3 16 7 -17 3 15 7 -14 2 12 6 -10" class="nofill thin" />
+            <path d="M-6 -150l-5 -13 9 8 4 -13 4 14 8 -7 -4 12" class="nofill" />
+            <path d="M-40 -144L-27 -148M27 -148L40 -144M-5 -150H5" class="nofill" /><circle cx="-16" cy="-150" r="11" /><circle cx="16" cy="-150" r="11" />
+            <circle cx="-9" cy="-112" r="2.3" class="dot" /><circle cx="9" cy="-112" r="2.3" class="dot" />
+            <path d="M0 -106q4 3 0 6M-6 -94q6 3 12 0" class="nofill" />
+          </svg>
+      </div>
       <header class="cv-head">
         <div>
-          <p class="cv-kicker">できごとは事実。ひとことは、操縦士が勝手に書きました。</p>
-          <h2 id="cv-title">ふざけた履歴書</h2>
+          <p class="cv-kicker">黒い字は、きれいに書いた履歴書。青い字は、操縦士の落書きです。</p>
+          <h2 id="cv-title" class="cv-step" data-say="タイトルから直す。"><span class="pen cv-ins">ふざけた</span>履歴書</h2>
           <dl class="cv-id">
             <div><dt>氏名</dt><dd>RICK ORPHEN</dd></div>
-            <div><dt>特技</dt><dd>彫金、動画、マーケティング、開発、会社を作ること、会社を畳むこと</dd></div>
+            <div class="cv-step" data-say="畳むのも特技。"><dt>特技</dt><dd>彫金、動画制作、マーケティング、開発<span class="pen cv-inl">　＋ 会社を作る、会社を畳む</span></dd></div>
           </dl>
         </div>
-        <figure class="cv-photo">
+        <figure class="cv-photo cv-step" data-say="写真は、ぼく。">
           <svg class="pen-head" viewBox="-60 -170 120 110" aria-hidden="true" focusable="false">
               <path d="M-42 -110a4 6 0 1 0 0 10M42 -110a4 6 0 1 1 0 10" /><ellipse cx="0" cy="-112" rx="42" ry="38" />
               <path d="M-41 -120C-44 -158 44 -158 41 -120" class="nofill" />
@@ -133,26 +148,56 @@
               <circle cx="-9" cy="-112" r="2.3" class="dot" /><circle cx="9" cy="-112" r="2.3" class="dot" />
               <path d="M0 -106q4 3 0 6M-6 -94q6 3 12 0" class="nofill" />
             </svg>
-          <figcaption>写真（代理）</figcaption>
+          <figcaption>写真<span class="pen cv-inl">（代理）</span></figcaption>
         </figure>
       </header>
       <div class="cv-table">
-        <div class="cv-row cv-th"><p>できごと</p><p>操縦士のひとこと</p></div>
-          <div class="cv-row"><p class="cv-fact">専門学校で、貴金属のデザイン、鍛金、彫金、デザイン史を学ぶ。</p><p class="cv-note">最初は金属を叩いていた。いまはキーボードを叩いている。叩くものが変わっただけ。</p></div>
-          <div class="cv-row"><p class="cv-fact">卒業後、数社に勤める。</p><p class="cv-note">「数社」。きれいにまとめたな。</p></div>
-          <div class="cv-row"><p class="cv-fact">デジタル戦略の広告代理店を創業する。</p><p class="cv-note">彫金から広告へ。金属は曲げられても、進路がここまで曲がるとは聞いてない。</p></div>
-          <div class="cv-row"><p class="cv-fact">オウンドメディアと、P2P 分散サーバを使ったプロジェクトのコンサルティング事業を立ち上げる。</p><p class="cv-note">分散サーバ。このあたりから、経歴のほうも順調に分散しはじめる。</p></div>
-          <div class="cv-row"><p class="cv-fact">世界中の IT カンファレンスに登壇する。</p><p class="cv-note">世界中でしゃべった。彫金の話は、たぶん一度も求められていない。</p></div>
-          <div class="cv-row"><p class="cv-fact">会社を成功させる。</p><p class="cv-note">ここまでは履歴書に書きやすい。</p></div>
-          <div class="cv-row"><p class="cv-fact">自分で作った会社を、破産させる。</p><p class="cv-note">ここからが書きにくい。でも書く。成功と破産、両方やった人は意外と少ないので。</p></div>
-          <div class="cv-row"><p class="cv-fact">動画、マーケティング、開発を、同時にやり続ける。</p><p class="cv-note">肩書きを一つに絞れと言われ続けて、絞らなかった結果がこのサイトです。</p></div>
-          <div class="cv-row"><p class="cv-fact">いまは複数の会社の経営と顧問。SQUARE ONE の AI Division では、営業を統括しながら売るものを自分でも作っている。</p><p class="cv-note">で、いま言いたいことは一つだけ。</p></div>
+        <div class="cv-row cv-step" data-say="成績の話、誰もしてない。">
+          <p class="cv-clean">専門学校にて、貴金属造形およびデザイン（鍛金・彫金・デザイン史）を<s>優秀な成績で修了</s>。</p>
+          <p class="pen">金属を叩いてた。いまはキーボードを叩いてる。叩くものが変わっただけ。</p>
+        </div>
+        <div class="cv-row cv-step" data-say="ごまかすな。">
+          <p class="cv-clean">卒業後、数社にて<s>幅広い実務経験を積む</s>。</p>
+          <p class="pen">「数社」って何社だよ。数えろ。</p>
+        </div>
+        <div class="cv-row cv-step" data-say="力強く、は盛った。">
+          <p class="cv-clean">デジタル戦略の広告代理店を創業。<s>代表として事業を力強く牽引</s>。</p>
+          <p class="pen">彫金から広告。進路、曲がりすぎ。</p>
+        </div>
+        <div class="cv-row cv-step" data-say="戦略、あった？">
+          <p class="cv-clean">オウンドメディア、および P2P 分散サーバを活用したコンサルティング事業を<s>戦略的に展開</s>。</p>
+          <p class="pen">このへんから経歴のほうも分散しはじめる。</p>
+          <p class="cv-memo">何屋さんか聞かれると黙る時期</p>
+        </div>
+        <div class="cv-row cv-step" data-say="評価は自己申告。">
+          <p class="cv-clean">世界各国の IT カンファレンスに登壇し、<s>高い評価を得る</s>。</p>
+          <p class="pen">しゃべった。彫金の話は誰にも聞かれてない。</p>
+        </div>
+        <div class="cv-row cv-step" data-say="フラグ立てるな。">
+          <p class="cv-clean">事業を成長させ、<s>会社を成功に導く</s>。</p>
+          <p class="pen">ここまでは良かった。ここまでは。</p>
+        </div>
+        <div class="cv-row cv-step" data-say="正直に書け。">
+          <p class="cv-clean">その後、<s>一身上の都合により会社を整理</s>。</p>
+          <p class="pen">破産です。自分で作った会社を、破産させました。きれいに言うな。</p>
+          <p class="cv-memo">成功と破産、両方やった人は意外と少ない　←自慢するな</p>
+        </div>
+        <div class="cv-row cv-step" data-say="絞れ。">
+          <p class="cv-clean">現在は動画制作・マーケティング・開発を<s>横断的に手がける</s>。</p>
+          <p class="pen">肩書きを一つに絞れない人、とも言う。</p>
+        </div>
+        <div class="cv-row cv-step" data-say="たぶん、て。">
+          <p class="cv-clean">複数社の経営および顧問を務め、SQUARE ONE の AI Division にて<s>営業を統括</s>。</p>
+          <p class="pen">売るものも自分で作ってる。忙しいふり、ではない。たぶん。</p>
+        </div>
       </div>
-      <div class="cv-wish">
+      <div class="cv-wish cv-step" data-say="本音はこっち。">
         <p class="cv-wish-label">本人希望記入欄</p>
-        <p class="cv-wish-text">割りのいい仕事をください！</p>
+        <p class="cv-clean"><s>貴社のご発展に貢献できる業務を希望いたします。</s></p>
+        <p class="pen">今、金がないと死ぬ。迷惑かけちゃった人に、お金も返さなきゃいけない。だから、割りのいい仕事を求めています。</p>
+        <p class="pen cv-wish-text">割りのいい仕事をください！</p>
       </div>
-      <p class="cv-actions"><a class="btn" href="#contact" id="career-contact">仕事の相談をする</a></p>
+      <p class="cv-actions"><a class="btn" href="#contact" id="career-contact">仕事の相談をする</a><button type="button" class="btn btn-ghost" id="career-replay">もう一度、落書きさせる</button></p>
     </div>
   </dialog>
 

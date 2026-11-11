@@ -12,6 +12,7 @@ const chars = [...new Set(ascii + text.replace(/[\u0000-\u007f]/g, '') + '、。
 const fonts = [
   ['shippori-800', 'node_modules/@expo-google-fonts/shippori-mincho-b1/800ExtraBold/ShipporiMinchoB1_800ExtraBold.ttf'],
   ['zenkaku-400', 'node_modules/@expo-google-fonts/zen-kaku-gothic-new/400Regular/ZenKakuGothicNew_400Regular.ttf'],
+  ['kurenaido-400', 'node_modules/@expo-google-fonts/zen-kurenaido/400Regular/ZenKurenaido_400Regular.ttf'],
   ['zenkaku-700', 'node_modules/@expo-google-fonts/zen-kaku-gothic-new/700Bold/ZenKakuGothicNew_700Bold.ttf'],
 ];
 await mkdir('src/fonts', { recursive: true });

@@ -344,37 +344,67 @@ h2 { font-family: var(--display); font-weight: 800; line-height: 1.12; letter-sp
 .boy .reddot { fill: var(--red); stroke: none; }
 .boy .hair { stroke-width: 0.9; }
 
-/* ---------- career: a résumé the pilot scribbled on ---------- */
+/* ---------- career: a clean résumé that the pilot scribbles over ---------- */
 .about-body .btn { cursor: pointer; font: inherit; font-weight: 700; }
-.cv-wrap { max-width: 62rem; margin: 0 auto; padding: clamp(4.5rem, 10vh, 6.5rem) var(--pad) 3rem; }
-.cv-head { display: grid; grid-template-columns: minmax(0, 1fr) clamp(7rem, 16vw, 11rem); gap: 1.5rem clamp(1rem, 4vw, 3rem); align-items: end; }
-.cv-kicker { font-size: 0.85rem; font-weight: 700; color: var(--pen); }
-.cv h2 { font-size: clamp(2.6rem, 8vw, 6.5rem); line-height: 1.05; margin-top: 0.25rem; }
+.pen { font-family: 'Zen Kurenaido', var(--text); color: var(--pen); font-weight: 400; }
+.say, .boy .signtext { font-family: 'Zen Kurenaido', var(--text); }
+.cv { font-feature-settings: normal; }
+.cv-wrap { position: relative; max-width: 58rem; margin: 0 auto; padding: clamp(4.5rem, 10vh, 6.5rem) calc(var(--pad) + clamp(3.5rem, 9vw, 7rem)) 3rem var(--pad); }
+.cv-head { display: grid; grid-template-columns: minmax(0, 1fr) clamp(6.5rem, 14vw, 10rem); gap: 1.5rem clamp(1rem, 4vw, 3rem); align-items: end; }
+.cv-kicker { font-size: 0.85rem; font-weight: 700; }
+.cv h2 { font-size: clamp(2.8rem, 8vw, 6rem); line-height: 1.1; margin-top: 0.5rem; letter-spacing: 0.08em; white-space: nowrap; position: relative; padding-top: 0.55em; }
+.cv-ins { position: absolute; left: 0.1em; top: -0.1em; font-size: 0.42em; letter-spacing: 0; line-height: 1.2; transform: rotate(-5deg); }
+.cv-ins::after { content: '∨'; position: absolute; left: 0.2em; bottom: -0.75em; font-size: 0.7em; }
 .cv-id { margin-top: 1.25rem; border-top: 1px solid var(--ink); }
-.cv-id div { display: grid; grid-template-columns: 4em 1fr; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); }
+.cv-id > div { display: grid; grid-template-columns: 4em 1fr; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); }
 .cv-id dt { font-weight: 700; }
-.cv-photo { margin: 0; border: 1px solid var(--ink); aspect-ratio: 3 / 4; display: grid; grid-template-rows: 1fr auto; background: var(--paper); transform: rotate(2deg); }
-.cv-photo svg { width: 100%; height: 100%; padding: 8%; }
-.cv-photo figcaption { text-align: center; font-size: 0.72rem; border-top: 1px solid var(--ink); padding: 0.2rem; }
+.cv-inl { font-size: 1.15em; }
+.cv-id .cv-inl { display: block; }
+.cv-photo { margin: 0; border: 1px solid var(--ink); aspect-ratio: 3 / 4; display: grid; grid-template-rows: 1fr auto; background: var(--paper); }
+.cv-photo.hit { transform: rotate(3deg); transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.cv-photo svg { width: 100%; height: 100%; padding: 8%; opacity: 0; transition: opacity 0.3s linear 0.2s; }
+.cv-photo.hit svg { opacity: 1; }
+.cv-photo figcaption { text-align: center; font-size: 0.75rem; border-top: 1px solid var(--ink); padding: 0.2rem; }
 .pen-head * { stroke: var(--pen); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; fill: var(--paper); }
 .pen-head .nofill { fill: none; }
 .pen-head .thin { stroke-width: 1.3; }
 .pen-head .dot { fill: var(--pen); stroke: none; }
 .cv-table { margin-top: clamp(1.5rem, 4vh, 3rem); border: 1px solid var(--ink); }
-.cv-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-bottom: 1px solid var(--ink); }
+.cv-row { position: relative; padding: 1rem 1.2rem 1.1rem; border-bottom: 1px solid var(--ink); }
 .cv-row:last-child { border-bottom: 0; }
-.cv-row > p { padding: 0.9rem 1.1rem; }
-.cv-row > p + p { border-left: 1px solid var(--ink); }
-.cv-th { font-weight: 700; font-size: 0.85rem; background: var(--ink); color: var(--paper); }
-.cv-fact { font-family: var(--display); font-weight: 800; font-size: clamp(1.05rem, 1.7vw, 1.35rem); line-height: 1.6; }
-.cv-note { color: var(--pen); font-weight: 700; transform: rotate(-0.6deg); }
-.cv-row:nth-child(even) .cv-note { transform: rotate(0.5deg); }
-.cv-wish { margin-top: 1.5rem; border: 1px solid var(--ink); }
-.cv-wish-label { font-size: 0.85rem; font-weight: 700; padding: 0.4rem 1.1rem; border-bottom: 1px solid var(--ink); }
-.cv-wish-text { padding: 1.2rem 1.1rem 1.5rem; color: var(--pen); font-family: var(--display); font-weight: 800; font-size: clamp(1.9rem, 6vw, 4.5rem); line-height: 1.2; transform: rotate(-1.2deg); }
-.cv-actions { margin-top: 1.75rem; }
+.cv-clean { font-weight: 700; font-size: 1.02rem; line-height: 2; letter-spacing: 0.03em; }
+.cv s { text-decoration: none; background-image: linear-gradient(var(--pen), var(--pen)), linear-gradient(var(--pen), var(--pen)); background-repeat: no-repeat; background-position: 0 44%, 0 60%; background-size: 0 2px, 0 1.5px; transition: background-size 0.45s ease-out, color 0.3s linear; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.hit s { background-size: 100% 2px, 100% 1.5px; color: color-mix(in srgb, var(--ink) 50%, transparent); }
+.cv .pen { clip-path: inset(-20% 100% -20% 0); transition: clip-path 0.75s steps(16) 0.4s; }
+.cv .hit .pen, .cv .hit.pen, .cv h2.hit .pen { clip-path: inset(-20% 0 -20% 0); }
+.cv-row .pen { display: block; font-size: 1.3rem; line-height: 1.6; margin: 0.15rem 0 0 1.4rem; transform: rotate(-0.8deg); transform-origin: left center; }
+.cv-row:nth-child(even) .pen { transform: rotate(0.7deg); margin-left: 2.4rem; }
+.cv-row .pen::before { content: '↳ '; }
+.cv-memo { display: table; margin: 0.7rem 0 0 auto; max-width: 16em; padding: 0.5rem 0.7rem; background: #f6f6f1; color: var(--pen); border: 1px solid var(--pen); font-family: 'Zen Kurenaido', var(--text); font-size: 1.05rem; line-height: 1.5; transform: rotate(3deg) scale(0); transform-origin: top right; transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) 1s; box-shadow: 3px 3px 0 color-mix(in srgb, var(--ink) 18%, transparent); z-index: 1; }
+[data-theme='void'] .cv-memo { background: #101010; }
+.hit .cv-memo { transform: rotate(3deg) scale(1); }
+.cv-wish { margin-top: 1.5rem; border: 1px solid var(--ink); padding-bottom: 1.2rem; }
+.cv-wish-label { font-size: 0.85rem; font-weight: 700; padding: 0.4rem 1.2rem; border-bottom: 1px solid var(--ink); }
+.cv-wish .cv-clean { padding: 0.9rem 1.2rem 0; }
+.cv-wish .pen { display: block; padding: 0.2rem 1.2rem 0 2.2rem; font-size: 1.35rem; line-height: 1.6; transform: rotate(-0.6deg); }
+.cv-wish .cv-wish-text { font-size: clamp(2.1rem, 6.4vw, 4.6rem); line-height: 1.25; padding-left: 1.2rem; transform: rotate(-2deg); transition-delay: 1.2s; }
+.cv-actions { margin-top: 1.75rem; display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.cv-actions .btn { cursor: pointer; font: inherit; font-weight: 700; }
+/* the pilot walks down the right margin, scribbling as he goes */
+.cv-runner { position: absolute; right: var(--pad); top: 0; width: clamp(3.5rem, 9vw, 7rem); z-index: 2; transition: transform 0.55s cubic-bezier(0.3, 1.35, 0.5, 1); pointer-events: none; }
+.cv-runner svg { display: block; width: 100%; height: auto; animation: cv-bob 1.1s ease-in-out infinite; transform-origin: 50% 100%; }
+.cv-runner.scribble svg { animation: cv-scrib 0.5s linear; }
+@keyframes cv-bob { 50% { transform: translateY(-4%) rotate(2deg); } }
+@keyframes cv-scrib { 0% { transform: rotate(0) } 20% { transform: rotate(-16deg) translateX(-6%) } 40% { transform: rotate(-9deg) translateX(3%) } 60% { transform: rotate(-17deg) translateX(-5%) } 80% { transform: rotate(-8deg) } 100% { transform: rotate(0) } }
+.cv-rb { position: absolute; right: 92%; top: 6%; margin: 0; white-space: nowrap; padding: 0.25rem 0.7rem; background: var(--paper); border: 1.5px solid var(--pen); border-radius: 999px 999px 4px 999px; color: var(--pen); font-family: 'Zen Kurenaido', var(--text); font-size: 1.05rem; opacity: 0; transform: scale(0.6); transform-origin: right bottom; transition: opacity 0.15s linear, transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.cv-rb.on { opacity: 1; transform: scale(1); }
 @media (max-width: 760px) {
-  .cv-row { grid-template-columns: 1fr; }
-  .cv-row > p + p { border-left: 0; border-top: 1px dashed color-mix(in srgb, var(--ink) 40%, transparent); }
-  .cv-th p + p { display: none; }
+  .cv-wrap { padding-right: var(--pad); }
+  .cv-runner { right: 0.25rem; width: 3.4rem; }
+  .cv-row .pen, .cv-row:nth-child(even) .pen { margin-left: 0.6rem; font-size: 1.15rem; }
+  .cv h2 { font-size: clamp(2.4rem, 13vw, 4rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cv s, .cv .pen, .cv-memo, .cv-runner, .cv-photo svg { transition: none; }
+  .cv-runner svg { animation: none; }
 }
