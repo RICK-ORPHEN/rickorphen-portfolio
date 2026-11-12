@@ -234,6 +234,8 @@ export function createScribbler(dialog, { reduced = false } = {}) {
     // step out to the margin so the last line stays readable, then beg
     go({ x: wrap.clientWidth - runner.clientWidth - 6, y: S.y });
     await arrive(id);
+    S.writing = false;
+    await face('front', id); // he may still have his back turned after writing in a hurry
     say('たのむ。');
     S.gesture = 'pray';
   }
