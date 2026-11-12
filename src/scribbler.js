@@ -185,6 +185,8 @@ export function createScribbler(dialog, { reduced = false } = {}) {
       go({ x: S.x - memo.offsetWidth * 0.5 - 60 * K(), y: S.y });
       await arrive(id);
     }
+    // a heckle only when the reader is actually looking at this line; in a hurry he just moves on
+    if (pace() > 1 || step.getBoundingClientRect().bottom < 120) return;
     await face('front', id);
     S.gesture = gesture;
     say(step.dataset.say || '');
@@ -199,7 +201,7 @@ export function createScribbler(dialog, { reduced = false } = {}) {
     await sleep(700, id);
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
-      if (passed(i)) { finish(step); jumped = true; continue; }
+      if (passed(i)) { finish(step); jumped = true; say(''); continue; }
       cur = -1;
       let waited = 0;
       while (step.getBoundingClientRect().top > innerHeight * 0.8) {
