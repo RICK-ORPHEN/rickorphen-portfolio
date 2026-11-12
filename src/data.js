@@ -143,7 +143,7 @@ export const works = [
     lead: '業者に頼んでいたその仕事を、自分の手で。',
     body: '自分の仕事を題材に、対話と実践で AI を学ぶメンバーシップ。資料づくり・画像制作・業務改善を自分でつくって直せるようになり、つまずいたら人に直接相談できます。',
     facts: [['相手', '個人・法人'], ['かたち', 'メンバーシップ']],
-    url: 'https://ai-jibungoto.vercel.app/',
+    url: 'https://ai-jibungoto.com/',
     shot: 'jibungoto',
   },
   {
