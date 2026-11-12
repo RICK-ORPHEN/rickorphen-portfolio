@@ -473,7 +473,7 @@ function loop(now) {
   if (zone < 1 && !reduced) drawBars(t);
   if (tick % 6 === 0) drawTele();
   ptr.speed *= 0.9;
-  const out = pilot(now, scene ? scene.seatScreen() : null, ptr, { summon: n >= 0.995 && !reduced, keep: n >= 0.8, hide: sheet.open || career.open, jolt: jolt && n < 0.995 });
+  const out = pilot(now, scene ? scene.seatScreen() : null, ptr, { summon: n >= 0.995 && !reduced, keep: n >= 0.8, hide: sheet.open || career.open, quiet: zone > 0.12, jolt: jolt && n < 0.995 });
   jolt = false;
   scene?.setPilot(out);
   // hero letters drift with the dial

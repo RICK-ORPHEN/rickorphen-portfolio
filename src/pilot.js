@@ -195,7 +195,7 @@ export function createPilot() {
     }
     if (zzz) p.zzz.setAttribute('transform', `translate(0 ${(-((t * 14) % 16)).toFixed(1)})`);
 
-    if (text) {
+    if (text && !st.quiet) {
       say.textContent = text;
       say.classList.add('on');
       say.style.transform = `translate(${(seat.x + (56 + slide + lean * 1.4) * k).toFixed(1)}px, ${Math.max(seat.y - 150 * k + y * k, 64).toFixed(1)}px)`;
